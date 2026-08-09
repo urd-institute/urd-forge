@@ -116,6 +116,14 @@ export function attachTerminal(ws, { slug, cwd, cols, rows, presets }) {
       } catch {
         /* pty may be closing */
       }
+    } else if (msg.type === 'kill') {
+      // User asked to stop the session (Stop button). onExit does the
+      // cleanup and notifies every attached client.
+      try {
+        session.pty.kill();
+      } catch {
+        /* already gone */
+      }
     } else if (msg.type === 'preset' && typeof msg.command === 'string') {
       // Presets come from forge.config.yaml (or the built-in defaults) and are
       // matched against the server-side list — the client cannot invent commands.
@@ -128,6 +136,15 @@ export function attachTerminal(ws, { slug, cwd, cols, rows, presets }) {
     session.clients.delete(ws);
     // Session stays alive for reattachment; it dies with the app (§6).
   });
+}
+
+/** Live sessions for the dev-server scan: [{slug, buffer}]. */
+export function liveSessions() {
+  const out = [];
+  for (const [slug, s] of sessions) {
+    if (!s.dead) out.push({ slug, buffer: s.buffer });
+  }
+  return out;
 }
 
 export function killAll() {

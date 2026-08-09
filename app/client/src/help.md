@@ -101,9 +101,22 @@ works spec-driven from there.
   Most of them start a Claude Code session with a ready-made instruction that
   uses the project's own files. They come from `forge.config.yaml` (built-in
   defaults if not configured) and are validated server-side.
+- **Stop session** (under the presets) ends the shell and everything running
+  in it — click twice to confirm, then use **Start a new session** to get a
+  fresh shell. To interrupt just the running program, use Ctrl+C in the
+  terminal instead.
 - Claude Code requires a global install (`npm install -g
   @anthropic-ai/claude-code`) and an Anthropic subscription or API key.
   Without it the terminal is still a normal shell.
+
+### Dev servers
+
+The home screen shows a **dev servers** panel whenever Forge knows about a
+development server: any `http://localhost:…` URL printed in a project's
+terminal session is picked up automatically, probed, and listed with its
+project and an up/down state — so you can see at a glance what is running and
+where. Servers started outside Forge's terminals can be declared in
+`forge.config.yaml` (see Configuration) and are probed the same way.
 
 ## 5. Working with AI sessions
 
@@ -127,6 +140,11 @@ presets:
   my-project:       # …or per project slug
     - label: Run tests
       command: npm test
+servers:            # dev servers started outside Forge's terminals
+  my-project:
+    - http://localhost:3000
+    - label: API    # optional label
+      url: http://localhost:8080
 ```
 
 Everything has defaults; the file may be empty.

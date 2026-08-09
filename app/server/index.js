@@ -17,6 +17,7 @@ import { createUpdater, UpdateError } from './update.js';
 import { search } from './search.js';
 import { startWatcher } from './watcher.js';
 import { loadPty, terminalAvailable, attachTerminal, killAll } from './terminal.js';
+import { listServers } from './servers.js';
 
 const started = Date.now();
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -80,6 +81,17 @@ api.post('/projects/:slug/specs', (req, res) => {
     if (err instanceof ScaffoldError) return res.status(err.status).json({ error: err.message });
     console.warn('[forge] spec import failed:', err);
     res.status(500).json({ error: 'Could not import the spec: ' + err.message });
+  }
+});
+
+api.get('/servers', async (req, res) => {
+  // Dev-server overview: declared in config or spotted in live terminal
+  // output, each probed with a TCP connect on 127.0.0.1 (read-only).
+  try {
+    res.json({ servers: await listServers(config, store) });
+  } catch (err) {
+    console.warn('[forge] server scan failed:', err);
+    res.json({ servers: [] });
   }
 });
 

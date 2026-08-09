@@ -479,3 +479,41 @@ code { font-family: var(--mono); background: var(--paper-deep); padding: 1px 4px
   cursor: pointer;
 }
 .preset:hover { border-color: var(--ember); color: var(--ember-deep); }
+.preset.stop-session:hover { border-color: var(--ember); color: var(--ember-deep); }
+.preset.stop-session.armed {
+  border-color: var(--ember);
+  background: var(--error-bg);
+  color: var(--ember-deep);
+}
+.error-note .restart-session { margin-left: 12px; }
+
+/* ── Dev servers (home) ───────────────────────────────────────── */
+.server-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-raised);
+  padding: 12px 16px;
+  margin-bottom: 22px;
+}
+.server-panel-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--ink-faint);
+  margin: 0 0 8px;
+}
+.server-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.server-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 13.5px; }
+.server-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  align-self: center;
+  flex: none;
+  background: var(--ink-faint);
+}
+.server-dot.up { background: var(--moss); }
+.server-dot.down { background: var(--error-border); }
+.server-project { color: var(--ink); font-weight: 600; }
+.server-url { font-size: 12.5px; }
+.server-state { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }

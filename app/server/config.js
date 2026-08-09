@@ -17,6 +17,9 @@ export function loadConfig(rootDir) {
     port: Number(raw.port) || 4400,
     projectsDir: path.resolve(rootDir, raw.projectsDir || 'projects'),
     presets: raw.presets && typeof raw.presets === 'object' ? raw.presets : {},
+    // Declared dev servers per project slug, for servers started outside
+    // Forge's terminals: slug → ["http://localhost:3000", {label, url}, …].
+    servers: raw.servers && typeof raw.servers === 'object' ? raw.servers : {},
     // `updates: false` disables self-update entirely — meant for development
     // copies, where the repository is updated by committing, not by pulling.
     updates: raw.updates !== false,

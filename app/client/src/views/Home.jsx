@@ -1,5 +1,52 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { api } from '../api.js';
 import { ProgressBar, ViewHeader, timeAgo } from '../components/bits.jsx';
+
+function DevServers() {
+  const [servers, setServers] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    const load = () => {
+      api('/servers')
+        .then((d) => alive && setServers(d.servers || []))
+        .catch(() => alive && setServers([]));
+    };
+    load();
+    const timer = setInterval(load, 8000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
+
+  if (!servers || servers.length === 0) return null;
+
+  return (
+    <section className="server-panel">
+      <h2 className="server-panel-title mono">dev servers</h2>
+      <ul className="server-list">
+        {servers.map((s) => (
+          <li key={s.slug + ':' + s.port} className="server-row">
+            <span className={'server-dot ' + (s.up ? 'up' : 'down')} title={s.up ? 'responding' : 'not responding'} />
+            <a className="server-project" href={'#/p/' + encodeURIComponent(s.slug)}>
+              {s.slug}
+            </a>
+            {s.label && <span className="muted">{s.label}</span>}
+            {s.up ? (
+              <a className="mono server-url" href={s.url} target="_blank" rel="noreferrer">
+                {s.url}
+              </a>
+            ) : (
+              <span className="mono server-url muted">{s.url}</span>
+            )}
+            <span className="mono server-state muted">{s.up ? 'up' : 'down'}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 export default function Home({ projects }) {
   return (
@@ -11,6 +58,8 @@ export default function Home({ projects }) {
           <a href="#/help">Read the guide</a>.
         </p>
       </ViewHeader>
+
+      <DevServers />
 
       <div className="card-grid">
         {projects.map((p) => (

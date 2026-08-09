@@ -25,8 +25,16 @@ export default function Terminal({ slug, autostart, autostartFile }) {
   const [presets, setPresets] = useState([]);
   const [notice, setNotice] = useState(null);
   const [pendingCommand, setPendingCommand] = useState(null);
+  const [ended, setEnded] = useState(false);
+  const [confirmStop, setConfirmStop] = useState(false);
+  // Bumping this restarts the effect below: new WebSocket → new session.
+  const [generation, setGeneration] = useState(0);
 
   useEffect(() => {
+    setNotice(null);
+    setEnded(false);
+    setConfirmStop(false);
+
     const term = new XTerm({
       fontFamily: 'ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace',
       fontSize: 13,
@@ -59,7 +67,9 @@ export default function Terminal({ slug, autostart, autostartFile }) {
       if (msg.type === 'data') term.write(msg.data);
       else if (msg.type === 'ready') {
         setPresets(msg.presets || []);
-        const cmd = autostartCommand(autostart, autostartFile);
+        // Autostart only applies to the first session on this view — a
+        // manually restarted session should come up as a plain shell.
+        const cmd = generation === 0 ? autostartCommand(autostart, autostartFile) : null;
         if (cmd && msg.fresh) {
           // Brand-new session: run the command automatically. Revisiting the
           // URL never re-runs it (the session is no longer fresh).
@@ -73,7 +83,10 @@ export default function Terminal({ slug, autostart, autostartFile }) {
         }
       }
       else if (msg.type === 'unavailable') setNotice(msg.message);
-      else if (msg.type === 'exit') setNotice('Session ended (exit code ' + msg.exitCode + '). Reopen this view to start a new one.');
+      else if (msg.type === 'exit') {
+        setEnded(true);
+        setNotice('Session ended (exit code ' + msg.exitCode + ').');
+      }
     };
     ws.onclose = () => {
       if (!notice) setNotice((n) => n || null);
@@ -99,17 +112,29 @@ export default function Terminal({ slug, autostart, autostartFile }) {
       term.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+  }, [slug, generation]);
 
   function runPreset(command) {
     const ws = wsRef.current;
     if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'preset', command }));
   }
 
+  function stopSession() {
+    if (!confirmStop) {
+      setConfirmStop(true);
+      // Reset the armed state if the second click never comes.
+      setTimeout(() => setConfirmStop(false), 4000);
+      return;
+    }
+    setConfirmStop(false);
+    const ws = wsRef.current;
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'kill' }));
+  }
+
   return (
     <div className="view view-terminal">
       <ViewHeader kicker={'command window · ' + slug} title="Terminal">
-        {presets.length > 0 && (
+        {presets.length > 0 && !ended && (
           <div className="preset-groups">
             {presets.map((g, i) => (
               <div className="preset-group" key={g.group || i}>
@@ -121,12 +146,31 @@ export default function Terminal({ slug, autostart, autostartFile }) {
                 ))}
               </div>
             ))}
+            <div className="preset-group">
+              <span className="preset-group-label mono">Session</span>
+              <button
+                className={'preset stop-session' + (confirmStop ? ' armed' : '')}
+                onClick={stopSession}
+                title="Ends the shell and everything running in it. Use Ctrl+C in the terminal to interrupt just the running program."
+              >
+                {confirmStop ? 'Click again to stop' : 'Stop session'}
+              </button>
+            </div>
           </div>
         )}
       </ViewHeader>
 
-      {notice && <div className="error-note">{notice}</div>}
-      {pendingCommand && (
+      {notice && (
+        <div className="error-note">
+          {notice}
+          {ended && (
+            <button className="preset restart-session" onClick={() => setGeneration((g) => g + 1)}>
+              Start a new session
+            </button>
+          )}
+        </div>
+      )}
+      {pendingCommand && !ended && (
         <div className="pending-command">
           <span>
             Spec imported. This project already has a running session — send the
