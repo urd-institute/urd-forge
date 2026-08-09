@@ -22,3 +22,6 @@ _doc/
 
 # Local configuration stays local — copy forge.config.example.yaml to start.
 /forge.config.yaml
+
+# Claude Code session data
+.claude/
