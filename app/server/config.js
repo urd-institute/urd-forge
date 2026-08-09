@@ -53,7 +53,12 @@ const DEFAULT_PRESET_GROUPS = [
   },
   {
     group: 'Claude Code',
-    items: [{ label: 'Start Claude Code', command: 'claude' }],
+    items: [
+      { label: 'Start Claude Code', command: 'claude' },
+      // For use while Claude Code is running in the session: types the
+      // /model slash command to show or switch the active model.
+      { label: '/model', command: '/model' },
+    ],
   },
 ];
 

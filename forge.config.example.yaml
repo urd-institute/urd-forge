@@ -31,3 +31,6 @@ projectsDir: projects
 #       items:
 #         - label: Run tests
 #           command: npm test
+#
+# A preset can also type into a running program — e.g. the built-in "/model"
+# button sends the /model slash command to an active Claude Code session.
