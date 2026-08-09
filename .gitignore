@@ -1,0 +1,24 @@
+node_modules/
+app/client/dist/
+.forge/
+*.log
+.DS_Store
+Thumbs.db
+# Internal Forge-format project documents — dev planning, not part of the
+# published repo (root-anchored so example projects are unaffected)
+_doc/
+/CLAUDE.md
+/ROADMAP.md
+/CONCEPT.md
+/DOCS.md
+/DESIGN.md
+/specs/
+
+# Users' own projects stay local — only the template and the demo ship.
+/projects/*
+!/projects/.gitkeep
+!/projects/_template/
+!/projects/demo-kaffelog/
+
+# Local configuration stays local — copy forge.config.example.yaml to start.
+/forge.config.yaml

@@ -1,0 +1,28 @@
+# URD Forge — configuration example.
+# Copy to forge.config.yaml and adjust. Every key is optional; without the
+# file Forge uses these defaults and a built-in set of terminal presets.
+
+# Port for the local web UI (binds to 127.0.0.1 only).
+port: 4400
+
+# Where project folders live, relative to this file.
+projectsDir: projects
+
+# Terminal preset buttons, grouped by topic. "default" applies to every
+# project without an entry of its own; override per project slug if needed.
+# Remove the whole presets key to keep Forge's built-in defaults (Status,
+# Tasks, Documents, Claude Code).
+#
+# presets:
+#   default:
+#     - group: Status
+#       items:
+#         - label: Project status
+#           command: 'claude "Read ROADMAP.md and specs/ and summarise where the project stands."'
+#         - label: Git status
+#           command: git status
+#   my-project:
+#     - group: Tasks
+#       items:
+#         - label: Run tests
+#           command: npm test
