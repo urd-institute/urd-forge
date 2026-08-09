@@ -1,12 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { ViewHeader, ErrorNote } from '../components/bits.jsx';
 
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Two-click confirm button, same pattern as the terminal's Stop session. */
+function ArmedButton({ label, armedLabel, disabled, title, onFire }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return (
+    <button
+      className={'preset stop-session' + (armed ? ' armed' : '')}
+      disabled={disabled}
+      title={title}
+      onClick={() => {
+        if (!armed) return setArmed(true);
+        setArmed(false);
+        onFire();
+      }}
+    >
+      {armed ? armedLabel : label}
+    </button>
+  );
+}
+
 export default function Update() {
   const [state, setState] = useState(null);
   const [checking, setChecking] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  // null | 'restarting' | 'restart-failed' | 'stopped'
+  const [phase, setPhase] = useState(null);
 
   function load(forceCheck) {
     if (forceCheck) setChecking(true);
@@ -38,6 +66,103 @@ export default function Update() {
     }
   }
 
+  async function restartForge() {
+    setError(null);
+    setPhase('restarting');
+    try {
+      const res = await fetch('/api/restart', { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setPhase(null);
+        setError(data.error || res.statusText);
+        return;
+      }
+    } catch {
+      // The server may die before the reply arrives — that IS the restart.
+    }
+    await wait(1500);
+    const deadline = Date.now() + 60000;
+    while (Date.now() < deadline) {
+      try {
+        const r = await fetch('/api/status');
+        if (r.ok) {
+          location.reload();
+          return;
+        }
+      } catch {
+        /* still down */
+      }
+      await wait(1000);
+    }
+    setPhase('restart-failed');
+  }
+
+  async function stopForge() {
+    setError(null);
+    try {
+      await fetch('/api/stop', { method: 'POST' });
+    } catch {
+      /* the connection dying is the expected outcome */
+    }
+    setPhase('stopped');
+  }
+
+  const supervised = Boolean(state && state.supervised);
+
+  function processCard() {
+    if (phase === 'restarting') {
+      return (
+        <section className="card">
+          <h3>Restarting…</h3>
+          <p className="muted">Forge is starting again — this page reloads when it is back.</p>
+        </section>
+      );
+    }
+    if (phase === 'stopped') {
+      return (
+        <section className="card">
+          <h3>Forge stopped</h3>
+          <p className="muted">
+            Start it again with <span className="mono">npm run forge</span> in the installation
+            folder, then reload this page.
+          </p>
+        </section>
+      );
+    }
+    return (
+      <section className="card">
+        <h3>Restart or stop Forge</h3>
+        <p className="muted small">
+          Both end every terminal session.{' '}
+          {supervised
+            ? 'Restart brings Forge straight back — this is how an installed update takes effect.'
+            : 'Forge was started without npm run forge, so it cannot start itself again — only stop.'}
+        </p>
+        {phase === 'restart-failed' && (
+          <ErrorNote>
+            Forge did not come back within a minute. Check the window running it, or start it
+            again with <span className="mono">npm run forge</span>.
+          </ErrorNote>
+        )}
+        <div className="btn-row">
+          <ArmedButton
+            label="Restart Forge"
+            armedLabel="Click again to restart"
+            disabled={!supervised}
+            title={supervised ? 'Ends all terminal sessions and starts Forge again.' : 'Unavailable — start Forge with npm run forge to enable.'}
+            onFire={restartForge}
+          />
+          <ArmedButton
+            label="Stop Forge"
+            armedLabel="Click again to stop"
+            title="Ends all terminal sessions and shuts Forge down."
+            onFire={stopForge}
+          />
+        </div>
+      </section>
+    );
+  }
+
   const cur = state && state.current;
 
   if (state && state.disabled) {
@@ -53,6 +178,8 @@ export default function Update() {
             pulling from it. Remove the setting to re-enable updates.
           </p>
         </section>
+        {error && <ErrorNote>{error}</ErrorNote>}
+        {processCard()}
       </div>
     );
   }
@@ -155,12 +282,30 @@ export default function Update() {
               <li key={s}>✓ {s}</li>
             ))}
           </ul>
-          <p>
-            <strong>Restart Forge to finish:</strong> stop it (Ctrl+C in the window running
-            it) and run <span className="mono">npm run forge</span> again.
-          </p>
+          {supervised ? (
+            <>
+              <p>
+                <strong>Restart Forge to finish.</strong> Terminal sessions end; the page
+                reloads when Forge is back.
+              </p>
+              <button
+                className="btn-primary"
+                onClick={restartForge}
+                disabled={phase === 'restarting'}
+              >
+                {phase === 'restarting' ? 'Restarting…' : 'Restart Forge now'}
+              </button>
+            </>
+          ) : (
+            <p>
+              <strong>Restart Forge to finish:</strong> stop it (Ctrl+C in the window running
+              it) and run <span className="mono">npm run forge</span> again.
+            </p>
+          )}
         </section>
       )}
+
+      {processCard()}
     </div>
   );
 }

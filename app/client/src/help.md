@@ -177,9 +177,13 @@ Everything has defaults; the file may be empty.
 (github.com/urd-institute/urd-forge) for new versions. An update only installs
 when it applies cleanly: if you have local commits or changed files that the
 update would touch, Forge refuses, lists the files and changes nothing. Your
-projects in `projects/` are never part of an update. After installing, restart
-Forge (<kbd>Ctrl+C</kbd>, then `npm run forge`). Development copies can opt out
-entirely with `updates: false` in `forge.config.yaml`.
+projects in `projects/` are never part of an update. After installing, press
+**Restart Forge now** — Forge starts itself again and the page reloads when it
+is back. The Updates screen also has a general **Restart or stop Forge** card;
+both actions end every terminal session first. Self-restart works when Forge
+was started with `npm run forge` (the normal way); started any other way, only
+stop is available. Development copies can opt out of updates entirely with
+`updates: false` in `forge.config.yaml`.
 
 ## 9. Principles worth keeping
 

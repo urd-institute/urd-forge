@@ -20,6 +20,10 @@ import { loadPty, terminalAvailable, attachTerminal, killAll } from './terminal.
 import { listServers } from './servers.js';
 
 const started = Date.now();
+// Set by the `npm run forge` supervisor: exiting with this code makes it
+// start the server again, which is how the UI's restart button works.
+const supervised = process.env.FORGE_SUPERVISED === '1';
+const RESTART_EXIT_CODE = 75;
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = loadConfig(rootDir);
 const store = new Store(config);
@@ -127,10 +131,10 @@ api.get('/projects/:slug/file', (req, res) => {
 
 api.get('/update', async (req, res) => {
   if (!config.updates) {
-    return res.json({ disabled: true, available: false, current: { version: '1.0.0' } });
+    return res.json({ disabled: true, available: false, current: { version: '1.0.0' }, supervised });
   }
   if (req.query.check === '1') await updater.check();
-  res.json(updater.getState());
+  res.json({ ...updater.getState(), supervised });
 });
 
 api.post('/update/apply', async (req, res) => {
@@ -145,6 +149,34 @@ api.post('/update/apply', async (req, res) => {
     if (err instanceof UpdateError) return res.status(err.status).json({ error: err.message });
     res.status(500).json({ error: 'Update failed: ' + err.message });
   }
+});
+
+// Restart/stop the Forge process itself. Still no command execution over
+// HTTP (SPEC-00 §6): the process only ends itself — the supervisor in
+// scripts/forge.js starts it again when it sees the restart exit code.
+api.post('/restart', (req, res) => {
+  if (!supervised) {
+    return res.status(409).json({
+      error:
+        'Forge is running without its supervisor, so it cannot start itself again. ' +
+        'Restart it from the window running it (npm run forge).',
+    });
+  }
+  console.log('[forge] Restart requested from the UI.');
+  res.json({ restarting: true });
+  setTimeout(() => {
+    killAll();
+    process.exit(RESTART_EXIT_CODE);
+  }, 300);
+});
+
+api.post('/stop', (req, res) => {
+  console.log('[forge] Stop requested from the UI.');
+  res.json({ stopping: true });
+  setTimeout(() => {
+    killAll();
+    process.exit(0);
+  }, 300);
 });
 
 api.get('/search', (req, res) => {
