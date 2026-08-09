@@ -8,6 +8,11 @@ port: 4400
 # Where project folders live, relative to this file.
 projectsDir: projects
 
+# Self-update from github.com/urd-institute/urd-forge is enabled by default.
+# Set to false to disable it — e.g. for a development copy that moves forward
+# by committing to the repository instead of pulling from it.
+# updates: false
+
 # Terminal preset buttons, grouped by topic. "default" applies to every
 # project without an entry of its own; override per project slug if needed.
 # Remove the whole presets key to keep Forge's built-in defaults (Status,

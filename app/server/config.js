@@ -17,6 +17,9 @@ export function loadConfig(rootDir) {
     port: Number(raw.port) || 4400,
     projectsDir: path.resolve(rootDir, raw.projectsDir || 'projects'),
     presets: raw.presets && typeof raw.presets === 'object' ? raw.presets : {},
+    // `updates: false` disables self-update entirely — meant for development
+    // copies, where the repository is updated by committing, not by pulling.
+    updates: raw.updates !== false,
   };
 }
 

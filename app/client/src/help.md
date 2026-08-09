@@ -153,7 +153,8 @@ Everything has defaults; the file may be empty.
 when it applies cleanly: if you have local commits or changed files that the
 update would touch, Forge refuses, lists the files and changes nothing. Your
 projects in `projects/` are never part of an update. After installing, restart
-Forge (<kbd>Ctrl+C</kbd>, then `npm run forge`).
+Forge (<kbd>Ctrl+C</kbd>, then `npm run forge`). Development copies can opt out
+entirely with `updates: false` in `forge.config.yaml`.
 
 ## 9. Principles worth keeping
 

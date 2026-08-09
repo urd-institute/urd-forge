@@ -40,6 +40,23 @@ export default function Update() {
 
   const cur = state && state.current;
 
+  if (state && state.disabled) {
+    return (
+      <div className="view">
+        <ViewHeader kicker="updates" title="Updates" />
+        <section className="card">
+          <h3>Self-update is disabled here</h3>
+          <p className="muted">
+            This installation has <span className="mono">updates: false</span> in{' '}
+            <span className="mono">forge.config.yaml</span> — typically because it is a
+            development copy, which is updated by committing to the repository rather than
+            pulling from it. Remove the setting to re-enable updates.
+          </p>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="view">
       <ViewHeader kicker="updates" title="Updates">

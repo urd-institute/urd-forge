@@ -30,7 +30,8 @@ await loadPty();
 const updater = createUpdater(rootDir, '1.0.0');
 // Quiet background check shortly after start; failures (offline, not a git
 // clone) are kept in the state and shown on the Updates screen only.
-setTimeout(() => updater.check().catch(() => {}), 3000);
+// Skipped entirely when self-update is disabled (development copies).
+if (config.updates) setTimeout(() => updater.check().catch(() => {}), 3000);
 
 const app = express();
 app.disable('x-powered-by');
@@ -113,11 +114,19 @@ api.get('/projects/:slug/file', (req, res) => {
 });
 
 api.get('/update', async (req, res) => {
+  if (!config.updates) {
+    return res.json({ disabled: true, available: false, current: { version: '1.0.0' } });
+  }
   if (req.query.check === '1') await updater.check();
   res.json(updater.getState());
 });
 
 api.post('/update/apply', async (req, res) => {
+  if (!config.updates) {
+    return res
+      .status(403)
+      .json({ error: 'Self-update is disabled in this installation (updates: false in forge.config.yaml).' });
+  }
   try {
     res.json(await updater.apply());
   } catch (err) {
