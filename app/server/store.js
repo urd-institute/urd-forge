@@ -7,13 +7,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  parseRoadmap,
-  parseSpec,
+  parsePhases,
   parseChangelog,
-  parseAdrs,
+  parseHeadingLog,
   firstParagraph,
   projectName,
-} from './parser.js';
+} from '@urd/reader-core';
+import { parseSpec } from './parser.js';
 
 const IGNORED_DIRS = new Set(['.forge', '.git', 'node_modules', '.claude']);
 
@@ -90,10 +90,10 @@ export function parseProject(projectsDir, slug) {
     hasDocs: docs != null,
     hasRoadmap: roadmapText != null,
     hasDesign: readIfExists(path.join(dir, 'DESIGN.md')) != null,
-    roadmap: roadmapText != null ? safeParse(() => parseRoadmap(roadmapText), 'ROADMAP.md') : null,
+    roadmap: roadmapText != null ? safeParse(() => parsePhases(roadmapText), 'ROADMAP.md') : null,
     specs,
     changelog: concept != null ? safeParse(() => parseChangelog(concept), 'CONCEPT.md', []) : [],
-    adrs: docs != null ? safeParse(() => parseAdrs(docs), 'DOCS.md', []) : [],
+    adrs: docs != null ? safeParse(() => parseHeadingLog(docs, 'ADR'), 'DOCS.md', []) : [],
     recentFiles: files.slice(0, 10),
     fileCount: files.length,
     updatedAt: files.length ? files[0].mtime : null,

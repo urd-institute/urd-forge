@@ -1,0 +1,27 @@
+{
+  "name": "@urd/reader-core",
+  "version": "0.1.0",
+  "description": "Shared reader engine for URD Forge and URD TAFL — tolerant markdown/frontmatter parsing, checkbox progress, heading logs, changelog timelines, file watching and free-text search. The files are the database.",
+  "author": "URD Institute (https://urdinstitute.org)",
+  "homepage": "https://github.com/urd-institute/urd-forge",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/urd-institute/urd-forge.git",
+    "directory": "packages/reader-core"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "yaml": "^2.6.0"
+  }
+}

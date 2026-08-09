@@ -8,6 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
+import { splitFrontmatter } from '@urd/reader-core';
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,49}$/;
 const TEMPLATE_FILES = ['CLAUDE.md', 'CONCEPT.md', 'ROADMAP.md', 'DOCS.md', 'DESIGN.md'];
@@ -134,17 +135,12 @@ export function importSpec(config, projectSlug, { content, area }) {
   }
 
   // Split off frontmatter (if any) and read what the spec says about itself.
-  let meta = {};
-  let body = content;
-  const fm = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-  if (fm) {
-    try {
-      meta = YAML.parse(fm[1]) || {};
-    } catch {
-      throw new ScaffoldError(400, 'The frontmatter in the pasted spec could not be parsed as YAML.');
-    }
-    body = content.slice(fm[0].length);
+  const fm = splitFrontmatter(content);
+  if (fm.found && fm.error) {
+    throw new ScaffoldError(400, 'The frontmatter in the pasted spec could not be parsed as YAML.');
   }
+  const meta = fm.meta;
+  const body = fm.body;
 
   const h1 = body.match(/^#\s+(?!#)(.+?)\s*$/m);
   const title = meta.titel || meta.title || (h1 && h1[1].replace(/^SPEC-\S+\s*[·—:-]*\s*/i, '')) || area || 'Imported spec';
