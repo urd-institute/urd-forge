@@ -309,6 +309,68 @@ code { font-family: var(--mono); background: var(--paper-deep); padding: 1px 4px
   color: var(--gold);
 }
 
+/* ── Settings ─────────────────────────────────────────────────── */
+.settings-section { margin-bottom: 34px; }
+.settings-section h2 { font-size: 19px; margin-bottom: 12px; }
+.settings-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.settings-text { flex: 1; min-width: 220px; }
+.settings-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  margin-bottom: 3px;
+}
+.settings-row .small { margin: 0; }
+.view-settings .theme-switch button { font-size: 12.5px; padding: 7px 12px; }
+.stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.stepper button {
+  border: none;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.stepper button:hover:not(:disabled) { color: var(--ink); }
+.stepper button:disabled { opacity: 0.4; cursor: default; }
+.stepper-value {
+  padding: 0 10px;
+  font-size: 12.5px;
+  color: var(--ink);
+  min-width: 48px;
+  text-align: center;
+}
+.settings-reset {
+  border: none;
+  background: none;
+  color: var(--ember);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 0;
+}
+.settings-reset:hover { text-decoration: underline; }
+.term-preview {
+  margin-top: 14px;
+  max-width: 640px;
+  background: #1c1a17;
+  color: #e8e2d6;
+  font-family: var(--mono);
+  border-radius: 6px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
 .content { flex: 1; overflow-y: auto; }
 .view { max-width: 1060px; padding: 30px 38px 60px; }
 

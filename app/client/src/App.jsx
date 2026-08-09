@@ -12,7 +12,9 @@ import Help from './views/Help.jsx';
 import NewProject from './views/NewProject.jsx';
 import ImportSpec from './views/ImportSpec.jsx';
 import Update from './views/Update.jsx';
+import Settings from './views/Settings.jsx';
 import { ProgressBar } from './components/bits.jsx';
+import { getSetting, onSettingsChange } from './settings.js';
 
 function parseHash() {
   const raw = location.hash.replace(/^#\/?/, '');
@@ -26,6 +28,7 @@ function parseHash() {
   if (parts[0] === 'help') return { view: 'help', slug: null, query };
   if (parts[0] === 'new') return { view: 'new', slug: null, query };
   if (parts[0] === 'updates') return { view: 'updates', slug: null, query };
+  if (parts[0] === 'settings') return { view: 'settings', slug: null, query };
   return { view: 'home', slug: null, query };
 }
 
@@ -37,43 +40,23 @@ const NAV = [
   { key: 'terminal', label: 'Terminal' },
 ];
 
-const THEMES = [
-  { key: 'light', icon: '☀', label: 'Light' },
-  { key: 'system', icon: '◐', label: 'Follow system' },
-  { key: 'dark', icon: '☾', label: 'Dark' },
-];
-
-function ThemeSwitch() {
-  const [setting, setSetting] = useState(() => localStorage.getItem('forge-theme') || 'system');
-
+/** Applies the theme setting (chosen on the Settings screen) to the document. */
+function useApplyTheme() {
   useEffect(() => {
-    localStorage.setItem('forge-theme', setting);
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
+      const setting = getSetting('theme', 'system');
       const dark = setting === 'dark' || (setting === 'system' && mq.matches);
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     };
     apply();
     mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, [setting]);
-
-  return (
-    <div className="theme-switch" role="group" aria-label="Color theme">
-      {THEMES.map((t) => (
-        <button
-          key={t.key}
-          type="button"
-          className={setting === t.key ? 'active' : ''}
-          title={t.label}
-          aria-label={t.label}
-          onClick={() => setSetting(t.key)}
-        >
-          {t.icon}
-        </button>
-      ))}
-    </div>
-  );
+    const off = onSettingsChange(apply);
+    return () => {
+      mq.removeEventListener('change', apply);
+      off();
+    };
+  }, []);
 }
 
 export default function App() {
@@ -82,6 +65,8 @@ export default function App() {
   const [tick, setTick] = useState(0); // bumped on file-watcher events → views refetch
   const [searchDraft, setSearchDraft] = useState('');
   const [updateAvailable, setUpdateAvailable] = useState(false);
+
+  useApplyTheme();
 
   useEffect(() => {
     // Quiet cached read — the server checks in the background after start.
@@ -178,13 +163,15 @@ export default function App() {
             <span className="help-mark mono">↻</span> Updates
             {updateAvailable && <span className="update-dot" title="Update available" />}
           </a>
+          <a href="#/settings" className={route.view === 'settings' ? 'active' : ''}>
+            <span className="help-mark mono">⚙</span> Settings
+          </a>
         </nav>
 
         <div className="side-footer">
           <span>
             <span className="mono">urd-forge v1</span> · URD Institute
           </span>
-          <ThemeSwitch />
         </div>
       </aside>
 
@@ -193,6 +180,7 @@ export default function App() {
         {route.view === 'help' && <Help />}
         {route.view === 'new' && <NewProject />}
         {route.view === 'updates' && <Update />}
+        {route.view === 'settings' && <Settings />}
         {route.view === 'search' && <Search query={route.query.get('q') || ''} tick={tick} />}
         {route.slug && route.view === 'overview' && <Overview slug={route.slug} tick={tick} />}
         {route.slug && route.view === 'roadmap' && <Roadmap slug={route.slug} tick={tick} />}

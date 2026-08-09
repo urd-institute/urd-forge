@@ -3,6 +3,7 @@ import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { ViewHeader } from '../components/bits.jsx';
+import { termFontSize } from '../settings.js';
 
 const BRIEF_COMMAND = 'claude "Read .forge/brief.md and follow the instructions in it."';
 
@@ -37,7 +38,7 @@ export default function Terminal({ slug, autostart, autostartFile }) {
 
     const term = new XTerm({
       fontFamily: 'ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace',
-      fontSize: 13,
+      fontSize: termFontSize(),
       cursorBlink: true,
       theme: {
         background: '#1c1a17',

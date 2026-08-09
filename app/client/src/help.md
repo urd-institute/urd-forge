@@ -85,6 +85,9 @@ instead of breaking anything. Fix the format and it reappears.
 - **Terminal** — the command window (next section).
 - **Search** (sidebar) — free text across every file in every project.
   Results link straight to the file.
+- **Settings** (sidebar, the ⚙ gear) — color theme (light / dark / follow
+  system) and the terminal font size. Preferences are stored in the browser,
+  so each browser keeps its own.
 
 ## 4. The command window
 
@@ -105,6 +108,10 @@ works spec-driven from there.
   in it — click twice to confirm, then use **Start a new session** to get a
   fresh shell. To interrupt just the running program, use Ctrl+C in the
   terminal instead.
+- The terminal's **font size** can be changed on the Settings screen (⚙ in
+  the sidebar). The new size applies when a terminal view is opened — the
+  running session is untouched, and the scrollback is replayed at the new
+  size.
 - Claude Code requires a global install (`npm install -g
   @anthropic-ai/claude-code`) and an Anthropic subscription or API key.
   Without it the terminal is still a normal shell.
