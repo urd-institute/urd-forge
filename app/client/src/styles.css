@@ -142,6 +142,21 @@ code { font-family: var(--mono); background: var(--paper-deep); padding: 1px 4px
 .new-project-link .mono { color: var(--gold); margin-right: 4px; }
 .new-project-link:hover { background: var(--paper); color: var(--ink); text-decoration: none; }
 .new-project-link.active { background: var(--paper); color: var(--ink); border-left-color: var(--gold); }
+.archive-link .mono { color: var(--ink-faint); }
+
+/* ── Archive ──────────────────────────────────────────────────── */
+.archive-list { list-style: none; margin: 0; padding: 0; max-width: 760px; }
+.archive-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--line);
+}
+.archive-main { flex: 1; min-width: 0; }
+.archive-name { font-family: var(--serif); font-size: 16px; }
+.archive-main .card-meta { margin-top: 4px; }
+.archive-progress { width: 120px; flex: none; }
 
 /* Nested under the active project in the project list */
 .project-list .view-nav {

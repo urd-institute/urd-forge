@@ -14,6 +14,7 @@ import {
   projectName,
 } from '@urd/reader-core';
 import { parseSpec } from './parser.js';
+import { LocalState } from './state.js';
 
 const IGNORED_DIRS = new Set(['.forge', '.git', 'node_modules', '.claude']);
 
@@ -117,6 +118,7 @@ export class Store {
   constructor(config) {
     this.config = config;
     this.projects = new Map();
+    this.localState = new LocalState(config.rootDir);
   }
 
   listSlugs() {
@@ -194,6 +196,7 @@ export class Store {
         specCount: p.specs.length,
         openSpecCount: p.openSpecs.length,
         updatedAt: p.updatedAt,
+        archived: this.localState.isArchived(p.slug),
       }));
   }
 

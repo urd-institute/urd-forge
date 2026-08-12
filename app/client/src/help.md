@@ -74,7 +74,8 @@ instead of breaking anything. Fix the format and it reappears.
 ## 3. The screens
 
 - **Overview** — README as front page, overall progress, open specs, recent
-  file activity and the concept timeline.
+  file activity and the concept timeline. This is also where you **archive** a
+  project (see below).
 - **Roadmap** — phases with progress bars; every step links to ROADMAP.md.
 - **Specs** — the spec board: columns per status, cards with dependencies.
   Click a card to read the rendered spec. **Import spec** takes a spec written
@@ -88,6 +89,18 @@ instead of breaking anything. Fix the format and it reappears.
 - **Settings** (sidebar, the ⚙ gear) — color theme (light / dark / follow
   system) and the terminal font size. Preferences are stored in the browser,
   so each browser keeps its own.
+
+### Archiving a project
+
+Done with a project for now? Click **Archive project** on its Overview screen.
+An archived project disappears from the sidebar and the home screen, but its
+files in `projects/` are untouched and still show up in search. An **Archive**
+link appears at the bottom of the project list whenever something is archived —
+open it to see the archived projects and **Restore** any of them.
+
+The archive is remembered per installation (in `forge.state.json` next to
+`forge.config.yaml`), not per browser — and it survives updating Forge from the
+Updates screen: an archived project stays archived after an update.
 
 ## 4. The command window
 

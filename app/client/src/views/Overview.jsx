@@ -11,12 +11,31 @@ import {
   timeAgo,
 } from '../components/bits.jsx';
 
-export default function Overview({ slug, tick }) {
+export default function Overview({ slug, tick, onChanged }) {
   const { data: project, error } = useFetch(() => api('/projects/' + encodeURIComponent(slug)), [slug, tick]);
   const { data: readme } = useFetch(
     () => api('/projects/' + encodeURIComponent(slug) + '/file?path=README.md').catch(() => null),
     [slug, tick]
   );
+  const [archiveBusy, setArchiveBusy] = React.useState(false);
+  const [archiveError, setArchiveError] = React.useState(null);
+
+  async function setArchived(archived) {
+    setArchiveBusy(true);
+    setArchiveError(null);
+    try {
+      const res = await fetch('/api/projects/' + encodeURIComponent(slug) + '/archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+      onChanged && onChanged();
+    } catch (err) {
+      setArchiveError(err.message);
+    }
+    setArchiveBusy(false);
+  }
 
   if (error) return <ErrorNote>{error}</ErrorNote>;
   if (!project) return <div className="view muted">Loading…</div>;
@@ -69,6 +88,23 @@ export default function Overview({ slug, tick }) {
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className="card">
+            <h3>{project.archived ? 'Archived' : 'Archive'}</h3>
+            <p className="muted small">
+              {project.archived
+                ? 'This project is archived: hidden from the sidebar and the home screen. Its files are untouched.'
+                : 'Hides the project from the sidebar and the home screen — the files are untouched, and you can restore it from the Archive link at any time.'}
+            </p>
+            <button
+              className="preset"
+              onClick={() => setArchived(!project.archived)}
+              disabled={archiveBusy}
+            >
+              {archiveBusy ? 'Working…' : project.archived ? 'Restore project' : 'Archive project'}
+            </button>
+            {archiveError && <p className="error-note small">{archiveError}</p>}
           </section>
 
           {project.changelog.length > 0 && (

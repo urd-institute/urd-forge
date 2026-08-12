@@ -13,6 +13,7 @@ import NewProject from './views/NewProject.jsx';
 import ImportSpec from './views/ImportSpec.jsx';
 import Update from './views/Update.jsx';
 import Settings from './views/Settings.jsx';
+import Archive from './views/Archive.jsx';
 import { ProgressBar } from './components/bits.jsx';
 import { getSetting, onSettingsChange } from './settings.js';
 
@@ -28,6 +29,7 @@ function parseHash() {
   if (parts[0] === 'help') return { view: 'help', slug: null, query };
   if (parts[0] === 'new') return { view: 'new', slug: null, query };
   if (parts[0] === 'updates') return { view: 'updates', slug: null, query };
+  if (parts[0] === 'archive') return { view: 'archive', slug: null, query };
   if (parts[0] === 'settings') return { view: 'settings', slug: null, query };
   return { view: 'home', slug: null, query };
 }
@@ -99,6 +101,11 @@ export default function App() {
     []
   );
 
+  // Archived projects (local installation state) stay out of the sidebar and
+  // the home screen; they are reachable through the Archive link instead.
+  const activeProjects = projects.filter((p) => !p.archived);
+  const archivedProjects = projects.filter((p) => p.archived);
+
   function submitSearch(e) {
     e.preventDefault();
     if (searchDraft.trim()) location.hash = '#/search?q=' + encodeURIComponent(searchDraft.trim());
@@ -125,7 +132,7 @@ export default function App() {
 
         <div className="side-section">Projects</div>
         <nav className="project-list">
-          {projects.map((p) => (
+          {activeProjects.map((p) => (
             <React.Fragment key={p.slug}>
               <a
                 href={'#/p/' + encodeURIComponent(p.slug)}
@@ -149,10 +156,20 @@ export default function App() {
               )}
             </React.Fragment>
           ))}
-          {projects.length === 0 && <div className="muted pad">No projects found in /projects.</div>}
+          {activeProjects.length === 0 && (
+            <div className="muted pad">No projects found in /projects.</div>
+          )}
           <a href="#/new" className={'new-project-link' + (route.view === 'new' ? ' active' : '')}>
             <span className="mono">+</span> New project
           </a>
+          {archivedProjects.length > 0 && (
+            <a
+              href="#/archive"
+              className={'new-project-link archive-link' + (route.view === 'archive' ? ' active' : '')}
+            >
+              <span className="mono">▣</span> Archive ({archivedProjects.length})
+            </a>
+          )}
         </nav>
 
         <nav className="side-help">
@@ -176,13 +193,18 @@ export default function App() {
       </aside>
 
       <main className="content">
-        {route.view === 'home' && <Home projects={projects} />}
+        {route.view === 'home' && <Home projects={activeProjects} />}
+        {route.view === 'archive' && (
+          <Archive projects={archivedProjects} onChanged={() => setTick((t) => t + 1)} />
+        )}
         {route.view === 'help' && <Help />}
         {route.view === 'new' && <NewProject />}
         {route.view === 'updates' && <Update />}
         {route.view === 'settings' && <Settings />}
         {route.view === 'search' && <Search query={route.query.get('q') || ''} tick={tick} />}
-        {route.slug && route.view === 'overview' && <Overview slug={route.slug} tick={tick} />}
+        {route.slug && route.view === 'overview' && (
+          <Overview slug={route.slug} tick={tick} onChanged={() => setTick((t) => t + 1)} />
+        )}
         {route.slug && route.view === 'roadmap' && <Roadmap slug={route.slug} tick={tick} />}
         {route.slug && route.view === 'specs' && <Specs slug={route.slug} tick={tick} />}
         {route.slug && route.view === 'decisions' && <Decisions slug={route.slug} tick={tick} />}

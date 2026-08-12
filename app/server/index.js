@@ -102,7 +102,18 @@ api.get('/servers', async (req, res) => {
 api.get('/projects/:slug', (req, res) => {
   const project = store.get(req.params.slug);
   if (!project) return res.status(404).json({ error: 'Unknown project' });
-  res.json(project);
+  res.json({ ...project, archived: store.localState.isArchived(project.slug) });
+});
+
+api.post('/projects/:slug/archive', (req, res) => {
+  // Archive/restore is local installation state (forge.state.json) — the
+  // project's files are untouched, and the flag survives self-updates.
+  const project = store.get(req.params.slug);
+  if (!project) return res.status(404).json({ error: 'Unknown project' });
+  const archived = !(req.body && req.body.archived === false);
+  store.localState.setArchived(project.slug, archived);
+  broadcast({ type: 'projects-changed' });
+  res.json({ slug: project.slug, archived });
 });
 
 api.get('/projects/:slug/presets', (req, res) => {
