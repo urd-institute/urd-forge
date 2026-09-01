@@ -503,7 +503,7 @@ code { font-family: var(--mono); background: var(--paper-deep); padding: 1px 4px
 }
 
 .content { flex: 1; overflow-y: auto; }
-.view { max-width: 1060px; padding: 30px 38px 60px; }
+.view { max-width: none; padding: 30px 38px 60px; }
 
 /* ── View header ──────────────────────────────────────────────── */
 .view-header { margin-bottom: 24px; }
