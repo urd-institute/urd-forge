@@ -75,8 +75,8 @@ instead of breaking anything. Fix the format and it reappears.
 ## 3. The screens
 
 - **Overview** — README as front page, overall progress, open specs, recent
-  file activity and the concept timeline. This is also where you **archive** a
-  project (see below).
+  file activity and the concept timeline. This is also where you **pin**,
+  **export** or **archive** a project (see below).
 - **Roadmap** — phases with progress bars; every step links to ROADMAP.md.
 - **Specs** — the spec board: columns per status, cards with dependencies.
   Click a card to read the rendered spec. **Import spec** takes a spec written
@@ -126,6 +126,32 @@ The archive is remembered per installation (in `forge.state.json` next to
 `forge.config.yaml`), not per browser — and it survives updating Forge from the
 Updates screen: an archived project stays archived after an update.
 
+### Pinning a project
+
+The projects you work on most can sit at the top of the list: click **Pin
+project** on a project's Overview screen. Pinned projects (marked ★) are
+listed first in the sidebar and on the home screen, above a thin divider, in
+alphabetical order; the rest follow alphabetically as before. **Unpin** on the
+same card puts it back. Like the archive, pins are remembered per
+installation in `forge.state.json`, so they survive updates.
+
+### Exporting and importing a project
+
+To move a project to another Forge installation — a fresh copy of Forge on a
+new machine, say — click **Export project (.zip)** on its Overview screen. The
+download contains the whole project folder: documents, specs, `.claude/`
+commands and the git history (`.git/`). `node_modules` and Forge's `.forge/`
+cache are left out; run `npm install` again after importing if the project
+has one.
+
+On the other installation, open **New project** and use **…or import an
+existing project** at the bottom: choose the zip, check the folder name
+(pre-filled from the file name) and click **Import project**. Forge unpacks
+the zip into a new folder under `projects/` and opens the project. An
+existing folder is never overwritten — pick another name instead. Any zip of
+a project folder works, not only Forge's own exports; a single top-level
+folder inside the zip is stripped automatically.
+
 ## 4. The command window
 
 Each project gets one terminal session, started in the project's folder. Open
@@ -150,6 +176,12 @@ works spec-driven from there.
   in it — click twice to confirm, then use **Start a new session** to get a
   fresh shell. To interrupt just the running program, use Ctrl+C in the
   terminal instead.
+- **Scrolling back**: the terminal keeps 10,000 lines of scrollback, and the
+  scrollbar on its right edge is always visible. Scroll with the mouse wheel
+  or drag the bar; typing jumps back to the bottom. Programs that take over
+  the whole screen (`less`, `vim`) have no scrollback of their own — leave
+  them to get it back. Forge keeps the terminal fitted to its window, so no
+  lines are ever cut off below the visible area.
 - The terminal's **font size** can be changed on the Settings screen (⚙ in
   the sidebar). The new size applies when a terminal view is opened — the
   running session is untouched, and the scrollback is replayed at the new

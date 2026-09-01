@@ -187,9 +187,14 @@ export class Store {
     return this.projects.get(slug) || null;
   }
 
+  /** Pinned projects first (each group alphabetical by slug). */
   list() {
+    const state = this.localState;
     return [...this.projects.values()]
-      .sort((a, b) => a.slug.localeCompare(b.slug))
+      .sort((a, b) => {
+        const pin = Number(state.isPinned(b.slug)) - Number(state.isPinned(a.slug));
+        return pin || a.slug.localeCompare(b.slug);
+      })
       .map((p) => ({
         slug: p.slug,
         name: p.name,
@@ -198,7 +203,8 @@ export class Store {
         specCount: p.specs.length,
         openSpecCount: p.openSpecs.length,
         updatedAt: p.updatedAt,
-        archived: this.localState.isArchived(p.slug),
+        archived: state.isArchived(p.slug),
+        pinned: state.isPinned(p.slug),
       }));
   }
 

@@ -27,6 +27,8 @@ export default function Overview({ slug, tick, onChanged }) {
   }
   const [archiveBusy, setArchiveBusy] = React.useState(false);
   const [archiveError, setArchiveError] = React.useState(null);
+  const [pinBusy, setPinBusy] = React.useState(false);
+  const [pinError, setPinError] = React.useState(null);
 
   async function setArchived(archived) {
     setArchiveBusy(true);
@@ -43,6 +45,23 @@ export default function Overview({ slug, tick, onChanged }) {
       setArchiveError(err.message);
     }
     setArchiveBusy(false);
+  }
+
+  async function setPinned(pinned) {
+    setPinBusy(true);
+    setPinError(null);
+    try {
+      const res = await fetch('/api/projects/' + encodeURIComponent(slug) + '/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+      onChanged && onChanged();
+    } catch (err) {
+      setPinError(err.message);
+    }
+    setPinBusy(false);
   }
 
   if (error) return <ErrorNote>{error}</ErrorNote>;
@@ -96,6 +115,33 @@ export default function Overview({ slug, tick, onChanged }) {
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className="card">
+            <h3>{project.pinned ? 'Pinned' : 'Pin to the top'}</h3>
+            <p className="muted small">
+              {project.pinned
+                ? 'This project is listed first in the sidebar and on the home screen (★).'
+                : 'Lists the project first in the sidebar and on the home screen, ahead of the alphabetical list.'}
+            </p>
+            <button className="preset" onClick={() => setPinned(!project.pinned)} disabled={pinBusy}>
+              {pinBusy ? 'Working…' : project.pinned ? 'Unpin project' : 'Pin project'}
+            </button>
+            {pinError && <p className="error-note small">{pinError}</p>}
+          </section>
+
+          <section className="card">
+            <h3>Export</h3>
+            <p className="muted small">
+              Downloads the project folder as a zip — documents, specs and git history included;{' '}
+              <span className="mono">node_modules</span> and the <span className="mono">.forge</span> cache are
+              left out. Import it into another Forge installation from its <em>New project</em> screen.
+            </p>
+            <div className="card-actions">
+              <a className="preset" href={'/api/projects/' + encodeURIComponent(slug) + '/export'} download>
+                Export project (.zip)
+              </a>
+            </div>
           </section>
 
           <section className="card">

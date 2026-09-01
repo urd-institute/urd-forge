@@ -64,7 +64,14 @@ export default function Home({ projects }) {
       <div className="card-grid">
         {projects.map((p) => (
           <a key={p.slug} className="card project-card" href={'#/p/' + encodeURIComponent(p.slug)}>
-            <h3>{p.name}</h3>
+            <h3>
+              {p.pinned && (
+                <span className="pin-mark" title="Pinned to the top">
+                  ★
+                </span>
+              )}
+              {p.name}
+            </h3>
             {p.summary && <p className="muted clamp">{p.summary}</p>}
             {p.progress != null ? <ProgressBar pct={p.progress} /> : <span className="muted mono">no roadmap</span>}
             <div className="card-meta mono">

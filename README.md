@@ -80,13 +80,17 @@ both). Parsing is tolerant: files that deviate are shown as
 ## Screens
 
 1. **Project list** — all projects with overall progress
-2. **Project overview** — README, progress, recent activity, open specs
+2. **Project overview** — README, progress, recent activity, open specs;
+   pin the project to the top of the list, export it as a zip, or archive it
 3. **Roadmap** — phases with progress bars; every step links to its source file
 4. **Spec board** — specs by status with dependencies; click for rendered markdown
 5. **Search** — free text across all files in all projects
 6. **Command window** — one terminal session per project, started in the
    project folder (xterm.js + node-pty); preset buttons via `forge.config.yaml`
 7. **Decision log** — the ADR list from DOCS.md, newest first
+8. **New project** — scaffold a project from a description (Claude Code drafts
+   the documents), or import a project zip exported from another Forge
+   installation
 
 ## Configuration
 

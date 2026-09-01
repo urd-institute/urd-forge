@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
@@ -24,6 +24,8 @@ function autostartCommand(autostart, file) {
 export default function Terminal({ slug, autostart, autostartFile }) {
   const holder = useRef(null);
   const wsRef = useRef(null);
+  // Refits the terminal to its holder; set by the session effect below.
+  const fitRef = useRef(null);
   const [presets, setPresets] = useState([]);
   const [notice, setNotice] = useState(null);
   const [pendingCommand, setPendingCommand] = useState(null);
@@ -55,6 +57,9 @@ export default function Terminal({ slug, autostart, autostartFile }) {
       fontFamily: 'ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace',
       fontSize: termFontSize(),
       cursorBlink: true,
+      // xterm's default (1000 lines) is exhausted quickly by Claude Code's
+      // redraws; keep enough that earlier output stays reachable.
+      scrollback: 10000,
       theme: {
         background: '#1c1a17',
         foreground: '#e8e2d6',
@@ -112,16 +117,66 @@ export default function Terminal({ slug, autostart, autostartFile }) {
       if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'input', data }));
     });
 
-    const onResize = () => {
-      fit.fit();
-      if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+    // ── Keep the terminal fitted to its holder ─────────────────────────
+    // The holder shrinks after the first fit (the preset rows arrive over the
+    // WebSocket, the /forge note appears once the project is fetched), and
+    // ResizeObserver callbacks are throttled while the tab is in the
+    // background. A missed fit leaves the terminal taller than the holder:
+    // the bottom rows are clipped by overflow:hidden, and xterm shows no
+    // scrollbar because, as far as it knows, everything fits. So: fit on
+    // every signal, only tell the pty when the size really changed (ConPTY
+    // repaints on every resize), verify the result and retry until it holds.
+    let sent = { cols: term.cols, rows: term.rows };
+    let retries = 0;
+    let retryFrame = 0;
+    const syncSize = () => {
+      if (ws.readyState !== 1 || (term.cols === sent.cols && term.rows === sent.rows)) return;
+      sent = { cols: term.cols, rows: term.rows };
+      ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
     };
-    window.addEventListener('resize', onResize);
-    const ro = new ResizeObserver(onResize);
+    // True when the terminal is taller than its holder (rows clipped) or at
+    // least a full row shorter than it (space wasted after the holder grew).
+    const misfits = () => {
+      const el = holder.current;
+      if (!el || !term.element) return false;
+      const inner = el.clientHeight; // .term-inner has no padding or border
+      const height = term.element.getBoundingClientRect().height;
+      if (inner <= 0 || height <= 0) return false;
+      const cell = height / Math.max(1, term.rows);
+      return height > inner + 1 || inner - height >= cell;
+    };
+    const fitNow = () => {
+      if (!holder.current || !term.element) return;
+      fit.fit();
+      syncSize();
+      cancelAnimationFrame(retryFrame);
+      if (misfits() && retries < 20) {
+        retries += 1;
+        retryFrame = requestAnimationFrame(fitNow);
+      } else {
+        retries = 0;
+      }
+    };
+    fitRef.current = fitNow;
+    ws.addEventListener('open', syncSize);
+    window.addEventListener('resize', fitNow);
+    document.addEventListener('visibilitychange', fitNow);
+    const ro = new ResizeObserver(fitNow);
     ro.observe(holder.current);
+    // Last line of defence: a cheap periodic check that never lets a clipped
+    // (or needlessly small) terminal stay that way, whatever the browser did
+    // with the events above — ResizeObserver and animation frames are paused
+    // in a hidden tab; a timer keeps ticking.
+    const guard = setInterval(() => {
+      if (misfits()) fitNow();
+    }, 1500);
 
     return () => {
-      window.removeEventListener('resize', onResize);
+      fitRef.current = null;
+      clearInterval(guard);
+      cancelAnimationFrame(retryFrame);
+      window.removeEventListener('resize', fitNow);
+      document.removeEventListener('visibilitychange', fitNow);
       ro.disconnect();
       sub.dispose();
       ws.close();
@@ -129,6 +184,13 @@ export default function Terminal({ slug, autostart, autostartFile }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, generation]);
+
+  // Anything rendered above the terminal (presets, notices, the /forge note)
+  // changes the holder's height — refit after every render. fit() is a no-op
+  // when the size is unchanged.
+  useLayoutEffect(() => {
+    if (fitRef.current) fitRef.current();
+  });
 
   function runPreset(command) {
     const ws = wsRef.current;
@@ -218,7 +280,12 @@ export default function Terminal({ slug, autostart, autostartFile }) {
           </button>
         </div>
       )}
-      <div className="term-holder" ref={holder} />
+      {/* xterm is mounted in an unpadded inner element: the fit addon sizes
+          the terminal from its parent's border-box height, so padding on the
+          parent would make it one row too tall (clipped, with no scrollbar). */}
+      <div className="term-holder">
+        <div className="term-inner" ref={holder} />
+      </div>
       <p className="muted small">
         Session runs in <span className="mono">projects/{slug}</span> · localhost only · dies with the app.
       </p>

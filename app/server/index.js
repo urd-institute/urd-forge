@@ -5,6 +5,7 @@
  */
 import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -13,6 +14,7 @@ import { WebSocketServer } from 'ws';
 import { loadConfig, presetsFor } from './config.js';
 import { Store } from './store.js';
 import { scaffoldProject, importSpec, installForgeCommand, ScaffoldError } from './scaffold.js';
+import { exportProject, importProject } from './transfer.js';
 import { filterSpecs } from './specfilter.js';
 import { createUpdater, UpdateError } from './update.js';
 import { search } from './search.js';
@@ -25,6 +27,7 @@ const started = Date.now();
 // start the server again, which is how the UI's restart button works.
 const supervised = process.env.FORGE_SUPERVISED === '1';
 const RESTART_EXIT_CODE = 75;
+const IMPORT_MAX_BYTES = 2 * 1024 * 1024 * 1024;
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = loadConfig(rootDir);
 const store = new Store(config);
@@ -124,10 +127,89 @@ api.get('/servers', async (req, res) => {
   }
 });
 
+api.post('/projects/import', (req, res) => {
+  // Imports a whole project from a zip (e.g. exported from another Forge
+  // installation). The upload is streamed to a temp file and extracted into
+  // a new projects/<slug>/ — file creation only, no command execution.
+  const type = String(req.headers['content-type'] || '');
+  if (!/zip|octet-stream/i.test(type)) {
+    return res.status(415).json({ error: 'Send the zip file as the request body (Content-Type: application/zip).' });
+  }
+  const tmp = path.join(os.tmpdir(), `forge-import-${process.pid}-${Date.now()}.zip`);
+  const out = fs.createWriteStream(tmp);
+  let bytes = 0;
+  let tooLarge = false;
+  const cleanup = () => fs.rm(tmp, { force: true }, () => {});
+  req.on('data', (chunk) => {
+    bytes += chunk.length;
+    if (bytes > IMPORT_MAX_BYTES && !tooLarge) {
+      tooLarge = true;
+      res.status(413).json({ error: 'The zip file is too large (max 2 GB).' });
+      req.destroy();
+    }
+  });
+  req.on('error', () => {
+    out.destroy();
+    cleanup();
+    if (!res.headersSent) res.status(400).json({ error: 'The upload was interrupted.' });
+  });
+  out.on('error', (err) => {
+    cleanup();
+    res.status(500).json({ error: 'Could not store the upload: ' + err.message });
+  });
+  out.on('finish', async () => {
+    if (tooLarge) {
+      cleanup();
+      return res.status(413).json({ error: 'The zip file is too large (max 2 GB).' });
+    }
+    try {
+      const result = await importProject(config, tmp, { slug: req.query.slug });
+      store.refresh(result.slug);
+      broadcast({ type: 'projects-changed' });
+      res.status(201).json(result);
+    } catch (err) {
+      if (err instanceof ScaffoldError) return res.status(err.status).json({ error: err.message });
+      console.warn('[forge] project import failed:', err);
+      res.status(500).json({ error: 'Could not import the project: ' + err.message });
+    } finally {
+      cleanup();
+    }
+  });
+  req.pipe(out);
+});
+
+api.get('/projects/:slug/export', (req, res) => {
+  // Downloads the project folder as a zip (read-only; see transfer.js for
+  // what is skipped).
+  const project = store.get(req.params.slug);
+  if (!project) return res.status(404).json({ error: 'Unknown project' });
+  try {
+    exportProject(config, project.slug, res);
+  } catch (err) {
+    console.warn('[forge] project export failed:', err);
+    res.status(500).json({ error: 'Could not export the project: ' + err.message });
+  }
+});
+
 api.get('/projects/:slug', (req, res) => {
   const project = store.get(req.params.slug);
   if (!project) return res.status(404).json({ error: 'Unknown project' });
-  res.json({ ...project, archived: store.localState.isArchived(project.slug) });
+  res.json({
+    ...project,
+    archived: store.localState.isArchived(project.slug),
+    pinned: store.localState.isPinned(project.slug),
+  });
+});
+
+api.post('/projects/:slug/pin', (req, res) => {
+  // Pinned projects are listed first in the sidebar and on the home screen.
+  // Local installation state, like archiving.
+  const project = store.get(req.params.slug);
+  if (!project) return res.status(404).json({ error: 'Unknown project' });
+  const pinned = !(req.body && req.body.pinned === false);
+  store.localState.setPinned(project.slug, pinned);
+  broadcast({ type: 'projects-changed' });
+  res.json({ slug: project.slug, pinned });
 });
 
 api.post('/projects/:slug/archive', (req, res) => {

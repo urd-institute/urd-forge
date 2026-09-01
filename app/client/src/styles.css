@@ -233,6 +233,9 @@ code { font-family: var(--mono); background: var(--paper-deep); padding: 1px 4px
 .new-project-link:hover { background: var(--paper); color: var(--ink); text-decoration: none; }
 .new-project-link.active { background: var(--paper); color: var(--ink); border-left-color: var(--gold); }
 .archive-link .mono { color: var(--ink-faint); }
+.pin-mark { color: var(--gold); font-size: 12px; margin-right: 5px; }
+.project-card .pin-mark { font-size: 13px; }
+.pin-divider { height: 1px; background: var(--line); margin: 6px 16px; }
 
 /* ── Archive ──────────────────────────────────────────────────── */
 .archive-list { list-style: none; margin: 0; padding: 0; max-width: 760px; }
@@ -352,6 +355,10 @@ code { font-family: var(--mono); background: var(--paper-deep); padding: 1px 4px
 
 .spec-paste { min-height: 260px; font-size: 12.5px; }
 .import-file-row { margin-top: 8px; }
+.import-project { margin-top: 28px; }
+.import-project .file-name { margin-left: 10px; font-size: 13px; }
+.card-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.card-actions .preset { text-decoration: none; }
 .check-row {
   display: flex;
   align-items: flex-start;
@@ -694,13 +701,21 @@ code { font-family: var(--mono); background: var(--paper-deep); padding: 1px 4px
 .view-terminal { display: flex; flex-direction: column; height: 100%; max-width: none; }
 .term-holder {
   flex: 1;
-  min-height: 300px;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
   background: #1c1a17;
   border-radius: 8px;
   border: 1px solid var(--line);
   padding: 8px;
   overflow: hidden;
 }
+/* xterm's parent: no padding or border, so the fit addon (which reads the
+ * parent's border-box height) never makes the terminal taller than this. */
+.term-inner { flex: 1; min-height: 0; overflow: hidden; }
+/* The scrollbar must stay visible on the dark terminal in every theme and
+ * scheme, so earlier output is always reachable by dragging as well. */
+.term-holder .xterm-viewport { scrollbar-width: auto; scrollbar-color: #6f6757 #262320; }
 .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .preset-groups { display: flex; flex-direction: column; gap: 7px; margin-top: 6px; }
 .preset-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

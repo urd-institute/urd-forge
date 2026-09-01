@@ -31,7 +31,9 @@ export function terminalAvailable() {
   return { available: ptyLib != null, error: ptyLib ? null : ptyError };
 }
 
-const SCROLLBACK_LIMIT = 200_000;
+// Replayed to a client that (re)attaches. Sized to match the client's
+// 10,000-line xterm scrollback rather than a screenful or two.
+const SCROLLBACK_LIMIT = 1_000_000;
 const sessions = new Map(); // slug → { pty, buffer, clients:Set<ws>, dead }
 
 function defaultShell() {

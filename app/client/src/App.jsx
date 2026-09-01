@@ -134,13 +134,22 @@ export default function App() {
 
         <div className="side-section">Projects</div>
         <nav className="project-list">
-          {activeProjects.map((p) => (
+          {activeProjects.map((p, i) => (
             <React.Fragment key={p.slug}>
+              {/* The server lists pinned projects first; mark where they end. */}
+              {i > 0 && activeProjects[i - 1].pinned && !p.pinned && <div className="pin-divider" />}
               <a
                 href={'#/p/' + encodeURIComponent(p.slug)}
-                className={'project-item' + (route.slug === p.slug ? ' active' : '')}
+                className={'project-item' + (route.slug === p.slug ? ' active' : '') + (p.pinned ? ' pinned' : '')}
               >
-                <span className="project-name">{p.name}</span>
+                <span className="project-name">
+                  {p.pinned && (
+                    <span className="pin-mark" title="Pinned to the top">
+                      ★
+                    </span>
+                  )}
+                  {p.name}
+                </span>
                 {p.progress != null && <ProgressBar pct={p.progress} slim />}
               </a>
               {route.slug === p.slug && (
