@@ -62,9 +62,10 @@ const DEFAULT_PRESET_GROUPS = [
       // /model slash command to show or switch the active model.
       { label: '/model', command: '/model' },
       // Also for a running Claude Code session: the /forge command shipped
-      // with the Forge template drafts a new spec from a description
-      // (`/forge <description>`; without one it asks a few questions).
-      { label: '/forge', command: '/forge' },
+      // with the Forge template. `/forge spec <description>` drafts a new
+      // spec (without a description it asks a few questions); `/forge q
+      // SPEC-XX` walks through a spec's open questions.
+      { label: '/forge spec', command: '/forge spec' },
     ],
   },
 ];

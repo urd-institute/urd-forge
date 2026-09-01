@@ -13,7 +13,7 @@ date at all times.
 - Each work area has a spec in `specs/SPEC-xx-<slug>.md` with YAML frontmatter:
   `id`, `title`, `status` (draft/approved/in-progress/done/superseded), `depends_on`,
   `blocks` and optionally `topics` (short filter words). Update `status` as
-  work progresses. No feature work without an approved spec. The `/forge
+  work progresses. No feature work without an approved spec. The `/forge spec
   <description>` command (`.claude/commands/forge.md`) drafts a new spec;
   `/forge q SPEC-xx` walks through a spec's open questions one by one.
 - Every question you put to the user — in a spec's "Open questions" or in

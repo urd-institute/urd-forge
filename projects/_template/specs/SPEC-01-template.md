@@ -17,8 +17,8 @@ status: draft → approved → in-progress → done (or superseded, when a newer
 replaces this one — keep the file, it is history). Nothing is built from a draft.
 depends_on/blocks: other spec ids — Forge draws the dependency board from these.
 topics: optional short words (e.g. [auth, ui]) — filter chips on Forge's spec board.
-Tip: in a Claude Code session, `/forge <description>` drafts a spec like this one,
-and `/forge q SPEC-xx` answers its open questions one at a time.
+Tip: in a Claude Code session, `/forge spec <description>` drafts a spec like
+this one, and `/forge q SPEC-xx` answers its open questions one at a time.
 -->
 
 What this area must achieve, in 2-4 sentences.

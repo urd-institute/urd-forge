@@ -242,7 +242,7 @@ export default function Terminal({ slug, autostart, autostartFile }) {
         <div className="pending-command forge-install">
           <span>
             <code>/forge</code> is not installed in this project — the Claude Code command that drafts a new spec
-            from a description.
+            (<code>/forge spec</code>) and answers a spec's open questions (<code>/forge q</code>).
           </span>
           <button className="preset" onClick={installForge} title="Creates .claude/commands/forge.md in the project">
             Install /forge
