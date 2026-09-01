@@ -15,6 +15,7 @@ import {
 } from '@urd/reader-core';
 import { parseSpec } from './parser.js';
 import { LocalState } from './state.js';
+import { installForgeCommand } from './scaffold.js';
 
 const IGNORED_DIRS = new Set(['.forge', '.git', 'node_modules', '.claude']);
 
@@ -151,10 +152,31 @@ export class Store {
       this.projects.delete(slug);
       return null;
     }
+    this.ensureForgeCommand(slug);
     const project = parseProject(this.config.projectsDir, slug);
     this.projects.set(slug, project);
     if (writeCache) this.writeCache(project);
     return project;
+  }
+
+  /**
+   * Every project gets the /forge Claude Code command (SPEC-02 §4.3) — not
+   * just the ones scaffolded by Forge. `.claude/` is gitignored, so the
+   * command can neither ship in `_template` nor arrive with an update; the
+   * scan installs it wherever it is missing. Pure file creation, never an
+   * overwrite (ADR-021). `_template` stays untouched so the shipped template
+   * folder holds only tracked files.
+   */
+  ensureForgeCommand(slug) {
+    if (slug === '_template') return;
+    const dest = path.join(this.config.projectsDir, slug, '.claude', 'commands', 'forge.md');
+    if (fs.existsSync(dest)) return;
+    try {
+      installForgeCommand(this.config, slug);
+      console.log(`[forge] Installed /forge command in projects/${slug}`);
+    } catch (err) {
+      console.warn(`[forge] Could not install /forge in projects/${slug}:`, err.message);
+    }
   }
 
   writeCache(project) {

@@ -595,8 +595,8 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
       {shown && project && project.hasForgeCommand === false && (
         <div className="panel-note">
           <span>
-            <code>/forge</code> is not installed in this project — the Claude Code command that drafts a new spec from
-            a description.
+            <code>/forge</code> could not be installed in this project — the Claude Code command that drafts a new
+            spec from a description. Forge installs it automatically; check the server log if this persists.
           </span>
           <button className="preset" onClick={installForge} title="Creates .claude/commands/forge.md in the project">
             Install /forge

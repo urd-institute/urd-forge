@@ -188,9 +188,10 @@ spec-driven from there.
   instruction that uses the project's own files. They come from
   `forge.config.yaml` (built-in defaults if not configured) and are validated
   server-side.
-- If the project does not have the **/forge** command yet (see §5), a note
-  in the panel offers to **install** it — one click creates
-  `.claude/commands/forge.md` in the project; nothing else is touched.
+- Every project gets the **/forge** command automatically (see §5). Only if
+  Forge could not create it does a note in the panel offer to **install** it
+  by hand — one click creates `.claude/commands/forge.md` in the project;
+  nothing else is touched.
 - **Stop session** ends the shell in the active tab and everything running
   in it — click twice to confirm. The tab stays, with **Restart in this
   tab** for a fresh shell. To interrupt just the running program, use Ctrl+C
@@ -228,9 +229,11 @@ a fresh AI session maintains the structure with no manual instructions.
 
 ### The /forge command
 
-Projects created from Forge ship a Claude Code slash command,
+Every project in Forge has a Claude Code slash command,
 `.claude/commands/forge.md` (source: `templates/commands/forge.md` in the
-installation). In a running Claude Code session, type
+installation). Forge creates it in any project that lacks it when it scans
+`projects/` — at startup and whenever a project changes — and never
+overwrites it. In a running Claude Code session, type
 
 ```
 /forge <what the spec should cover>
@@ -260,8 +263,9 @@ go, removes the answered question, and at the end offers to set the status
 to `approved` if nothing is left open. Say *skip* to leave a question open,
 *stop* to finish early.
 
-Existing projects get the command from the **Install /forge** note in the
-Terminal view; it is an ordinary markdown file you may edit to taste.
+The command is an ordinary markdown file you may edit to taste — your edits
+are kept. (`_template` is the one folder Forge leaves without it.) If the file
+could not be created, the terminal panel shows an **Install /forge** note.
 
 ## 6. Configuration
 
