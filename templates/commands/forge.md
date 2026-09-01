@@ -1,12 +1,11 @@
 ---
-description: Draft a new spec (/forge spec <description>) or walk through a spec's open questions (/forge q SPEC-XX)
-argument-hint: spec <what the spec should cover> | q <SPEC-XX>
+description: Draft a new spec from a description, or walk through a spec's open questions (/forge q SPEC-XX)
+argument-hint: <what the spec should cover> | q <SPEC-XX>
 ---
 
 You are working in a URD Forge project that follows the Forge format
 described in CLAUDE.md — keep it intact. This command has two modes, chosen
-by the first word of the arguments: `spec` drafts a new spec, `q` walks
-through an existing spec's open questions.
+by the first word of the arguments.
 
 Arguments: $ARGUMENTS
 
@@ -41,15 +40,16 @@ spec id (e.g. `q SPEC-03`; the number alone, `q 3`, is also fine):
 5. If a decision is significant for the project as a whole, offer to log it
    as the next ADR in `DOCS.md`; do not do it unasked.
 
-## Mode 2 — `/forge spec <description>`: draft a new spec
+## Mode 2 — anything else: draft a new spec
 
-If the arguments start with `spec`, create a new spec from the rest of the
-arguments. If the description is empty, ask me 2-3 short questions first (the
-area, the goal, and any known dependencies on existing specs — each with
-suggestions), then continue.
+Create a new spec from the description in the arguments. If the description
+is empty, ask me 2-3 short questions first (the area, the goal, and any known
+dependencies on existing specs — each with suggestions), then continue.
 
 1. Read `CONCEPT.md`, `ROADMAP.md` and the YAML frontmatter of every file in
-   `specs/` so the new spec fits the project and its existing specs.
+   `specs/` so the new spec fits the project and its existing specs. If the
+   first word of the description is "spec", ignore it — it is just the long
+   form of this command.
 2. Pick the next free spec number: the highest `SPEC-NN` found in `specs/`
    (filenames and `id` fields) plus one, zero-padded to two digits. Never
    reuse or renumber an existing spec.
@@ -97,11 +97,3 @@ suggestions), then continue.
    chose, and the open questions with their suggestions — and remind me that
    the spec is a draft, and that `/forge q SPEC-NN` walks through the
    questions one by one.
-
-## Anything else: show the two forms
-
-If the arguments are empty or start with any other word, do not guess. Reply
-with the two forms — `/forge spec <what the spec should cover>` and
-`/forge q <SPEC-XX>` — and ask which I meant, with suggestions: (1) draft a
-spec from the text I typed, (2) answer a spec's open questions. Continue in
-that mode once I answer.

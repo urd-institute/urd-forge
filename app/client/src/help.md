@@ -164,8 +164,8 @@ works spec-driven from there.
 - **Preset buttons** above the terminal are grouped by topic — *Status*
   (project status, outstanding work), *Tasks* (next task, implement a spec),
   *Documents* (new spec, consistency check, log a decision) and *Claude Code*
-  (start a session; `/model` and `/forge spec` for a session that is
-  already running). Most of them start a Claude Code session with a ready-made
+  (start a session; `/model` and `/forge` for a session that is already
+  running). Most of them start a Claude Code session with a ready-made
   instruction that uses the project's own files. They come from
   `forge.config.yaml` (built-in defaults if not configured) and are validated
   server-side.
@@ -214,14 +214,14 @@ Projects created from Forge ship a Claude Code slash command,
 installation). In a running Claude Code session, type
 
 ```
-/forge spec <what the spec should cover>
+/forge <what the spec should cover>
 ```
 
 and Claude drafts a new spec in `specs/`: it reads the concept, roadmap and
 existing specs, takes the next free SPEC number, writes the frontmatter
 (`status: draft`, dependencies, topics) and the standard sections, and adds an
-unchecked step to `ROADMAP.md`. `/forge spec` on its own asks a few
-questions first. The spec is always a draft — approve it before anything is built from
+unchecked step to `ROADMAP.md`. `/forge` on its own asks a few questions
+first. The spec is always a draft — approve it before anything is built from
 it.
 
 **Questions always come with suggestions.** Whenever the command asks you
@@ -240,9 +240,6 @@ suggestions), records every answer in the spec's *Decisions* section as you
 go, removes the answered question, and at the end offers to set the status
 to `approved` if nothing is left open. Say *skip* to leave a question open,
 *stop* to finish early.
-
-`/forge` without one of the two words (`spec`, `q`) does nothing but show
-the two forms and ask which you meant.
 
 Existing projects get the command from the **Install /forge** note in the
 Terminal view; it is an ordinary markdown file you may edit to taste.

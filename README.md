@@ -72,9 +72,8 @@ topics: [auth, ui]      # optional: filter chips on the spec board
 
 Copy `templates/CLAUDE.md` into new projects so AI sessions maintain the
 structure automatically, and `templates/commands/forge.md` into
-`.claude/commands/` to get the `/forge spec <description>` command, which
-drafts a new spec in a running Claude Code session (`/forge q SPEC-xx` walks
-through its open questions) (projects created from the UI get
+`.claude/commands/` to get the `/forge <description>` command, which drafts a
+new spec in a running Claude Code session (projects created from the UI get
 both). Parsing is tolerant: files that deviate are shown as
 "could not be parsed" instead of breaking the UI.
 
