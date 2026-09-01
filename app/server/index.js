@@ -19,7 +19,7 @@ import { filterSpecs } from './specfilter.js';
 import { createUpdater, UpdateError } from './update.js';
 import { search } from './search.js';
 import { startWatcher } from './watcher.js';
-import { loadPty, terminalAvailable, attachTerminal, killAll } from './terminal.js';
+import { loadPty, terminalAvailable, attachTerminal, killAll, listTabs, onTabEvent } from './terminal.js';
 import { listServers } from './servers.js';
 
 const started = Date.now();
@@ -223,6 +223,13 @@ api.post('/projects/:slug/archive', (req, res) => {
   res.json({ slug: project.slug, archived });
 });
 
+// Live terminal tabs of a project (SPEC-03 §4.1) — read-only; tabs are
+// created by connecting to the terminal WebSocket, never over HTTP.
+api.get('/projects/:slug/terminals', (req, res) => {
+  if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
+  res.json({ tabs: listTabs(req.params.slug), maxTabs: config.terminal.maxTabs });
+});
+
 api.get('/projects/:slug/presets', (req, res) => {
   if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
   res.json({ presets: presetsFor(config, req.params.slug), terminal: terminalAvailable() });
@@ -334,10 +341,13 @@ server.on('upgrade', (req, socket, head) => {
       }
       attachTerminal(ws, {
         slug,
+        tabId: url.searchParams.get('tab') || '',
+        title: url.searchParams.get('title') || '',
         cwd: path.join(config.projectsDir, slug),
         cols: Number(url.searchParams.get('cols')) || 100,
         rows: Number(url.searchParams.get('rows')) || 30,
         presets: presetsFor(config, slug),
+        maxTabs: config.terminal.maxTabs,
       });
     });
   } else {
@@ -353,6 +363,7 @@ function broadcast(msg) {
 }
 
 startWatcher(config, store, broadcast);
+onTabEvent(broadcast);
 
 server.listen(config.port, '127.0.0.1', () => {
   const term = terminalAvailable();

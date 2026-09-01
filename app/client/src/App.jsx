@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api, subscribeEvents } from './api.js';
 import Overview from './views/Overview.jsx';
 import Roadmap from './views/Roadmap.jsx';
 import Specs from './views/Specs.jsx';
 import Decisions from './views/Decisions.jsx';
-import Terminal from './views/Terminal.jsx';
+import TerminalPanel from './components/TerminalPanel.jsx';
 import Search from './views/Search.jsx';
 import FileView from './views/FileView.jsx';
 import Home from './views/Home.jsx';
@@ -39,8 +39,25 @@ const NAV = [
   { key: 'roadmap', label: 'Roadmap' },
   { key: 'specs', label: 'Specs' },
   { key: 'decisions', label: 'Decisions' },
+  // Opens the terminal panel maximized (SPEC-03 §3.4) — the route is an alias.
   { key: 'terminal', label: 'Terminal' },
 ];
+
+const BRIEF_COMMAND = 'claude "Read .forge/brief.md and follow the instructions in it."';
+
+/** The command a `#/p/<slug>/terminal?autostart=…` link asks to run in a new tab. */
+function autostartCommand(autostart, file) {
+  if (autostart === 'brief') return BRIEF_COMMAND;
+  if (autostart === 'spec' && file && /^[A-Za-z0-9._-]+$/.test(file)) {
+    return (
+      'claude "Read specs/' +
+      file +
+      ' - a newly imported spec. Review it against CLAUDE.md and the existing specs,' +
+      ' set its status and dependencies, add its steps to ROADMAP.md, and log an ADR in DOCS.md if it changes any decisions."'
+    );
+  }
+  return null;
+}
 
 /** Applies the theme (light/dark) and the color scheme to the document. The
  *  scheme follows the project being viewed when it has its own. */
@@ -69,8 +86,35 @@ export default function App() {
   const [tick, setTick] = useState(0); // bumped on file-watcher events → views refetch
   const [searchDraft, setSearchDraft] = useState('');
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  // The terminal panel follows the selected project; on screens without one
+  // (Home, Help, Updates…) it keeps showing the last project's sessions.
+  const [lastSlug, setLastSlug] = useState(null);
+  const panelRef = useRef(null);
+  const panelSlug = route.slug || lastSlug;
 
   useApplyTheme(route.slug);
+
+  useEffect(() => {
+    if (route.slug) setLastSlug(route.slug);
+  }, [route.slug]);
+
+  // `#/p/<slug>/terminal` is an alias for "open the panel maximized"; an
+  // `autostart` query runs its command in a new tab, `?tab=<id>` on any
+  // project route activates that tab (dev-server list). The query is
+  // stripped afterwards so a reload never runs the command twice.
+  useEffect(() => {
+    if (!route.slug || !panelRef.current) return;
+    const tab = route.query.get('tab');
+    if (route.view === 'terminal') {
+      const cmd = autostartCommand(route.query.get('autostart'), route.query.get('file'));
+      if (cmd) panelRef.current.openTab({ title: 'Claude Code', command: cmd, viaPreset: false });
+      panelRef.current.show('max');
+      location.replace('#/p/' + encodeURIComponent(route.slug));
+    } else if (tab) {
+      panelRef.current.activate(tab);
+      location.replace('#/p/' + encodeURIComponent(route.slug) + (route.view === 'overview' ? '' : '/' + route.view));
+    }
+  }, [route]);
 
   useEffect(() => {
     // Quiet cached read — the server checks in the background after start.
@@ -204,6 +248,7 @@ export default function App() {
       </aside>
 
       <main className="content">
+        <div className="content-view">
         {route.view === 'home' && <Home projects={activeProjects} />}
         {route.view === 'archive' && (
           <Archive projects={archivedProjects} onChanged={() => setTick((t) => t + 1)} />
@@ -221,15 +266,13 @@ export default function App() {
         {route.slug && route.view === 'decisions' && <Decisions slug={route.slug} tick={tick} />}
         {route.slug && route.view === 'import-spec' && <ImportSpec slug={route.slug} />}
         {route.slug && route.view === 'terminal' && (
-          <Terminal
-            slug={route.slug}
-            autostart={route.query.get('autostart')}
-            autostartFile={route.query.get('file')}
-          />
+          <Overview slug={route.slug} tick={tick} onChanged={() => setTick((t) => t + 1)} />
         )}
         {route.slug && route.view === 'file' && (
           <FileView slug={route.slug} path={route.query.get('path') || ''} tick={tick} />
         )}
+        </div>
+        <TerminalPanel ref={panelRef} slug={panelSlug} badge={!route.slug} />
       </main>
     </div>
   );

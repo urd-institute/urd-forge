@@ -152,40 +152,59 @@ existing folder is never overwritten — pick another name instead. Any zip of
 a project folder works, not only Forge's own exports; a single top-level
 folder inside the zip is stripped automatically.
 
-## 4. The command window
+## 4. The terminal panel
 
-Each project gets one terminal session, started in the project's folder. Open
-**Terminal** and run anything you would run in a shell — most importantly
-`claude` to start a Claude Code session that reads the project's CLAUDE.md and
-works spec-driven from there.
+The terminal is a **panel docked at the bottom** of every screen, so Claude
+Code can work in it while you read the spec board, the roadmap or the
+decision log above. Each tab is a shell started in the project's folder —
+run anything you would run in a terminal, most importantly `claude` to start
+a Claude Code session that reads the project's CLAUDE.md and works
+spec-driven from there.
 
-- The session **keeps running** while Forge runs — leave the view and come
-  back, and your scrollback is replayed. All sessions die with the app.
-- **Preset buttons** above the terminal are grouped by topic — *Status*
-  (project status, outstanding work), *Tasks* (next task, implement a spec),
-  *Documents* (new spec, consistency check, log a decision) and *Claude Code*
-  (start a session; `/model` and `/forge` for a session that is already
-  running). Most of them start a Claude Code session with a ready-made
+- **Open and close**: click the *▲ Terminal* bar at the bottom, or press
+  **Ctrl+J** (Ctrl+` also works). Closing the panel never stops anything —
+  the sessions keep running, and the bar shows their names and a dot when
+  new output arrived. **Drag the top edge** to resize; **⤢** maximizes the
+  panel over the whole content area (that is also what **Terminal** in the
+  project menu does), **⤡** restores it. Size and state are remembered in
+  this browser.
+- **Tabs**: a project can have several sessions at once — Claude Code in one
+  tab, `npm run dev` in another. **+** opens a new tab: an empty shell, or one
+  that starts with a preset. In the panel, **Alt+N** opens an empty tab and
+  **Alt+1…9** switches. Tabs are named after the preset that started them
+  (or *Terminal N*); programs that set a window title (Claude Code does)
+  rename the tab, and **double-click** gives it a name of your own that
+  sticks. Tabs survive a reload and are shared between browser windows.
+  **×** on a tab ends its session — click twice to confirm while something
+  is running. The limit is 6 tabs per project (`terminal.maxTabs` in
+  `forge.config.yaml`).
+- **Presets** sit in one row of menus above the terminal, grouped by topic
+  — *Status* (project status, outstanding work), *Tasks* (next task,
+  implement a spec), *Documents* (new spec, consistency check, log a
+  decision) and *Claude Code* (start a session; `/model` and `/forge` for a
+  session that is already running). A preset types its command into the
+  **active tab**; *+ tab* next to it (or Shift+click) runs it in a **new
+  tab** instead. Most presets start a Claude Code session with a ready-made
   instruction that uses the project's own files. They come from
   `forge.config.yaml` (built-in defaults if not configured) and are validated
   server-side.
 - If the project does not have the **/forge** command yet (see §5), a note
-  above the terminal offers to **install** it — one click creates
+  in the panel offers to **install** it — one click creates
   `.claude/commands/forge.md` in the project; nothing else is touched.
-- **Stop session** (under the presets) ends the shell and everything running
-  in it — click twice to confirm, then use **Start a new session** to get a
-  fresh shell. To interrupt just the running program, use Ctrl+C in the
-  terminal instead.
-- **Scrolling back**: the terminal keeps 10,000 lines of scrollback, and the
+- **Stop session** ends the shell in the active tab and everything running
+  in it — click twice to confirm. The tab stays, with **Restart in this
+  tab** for a fresh shell. To interrupt just the running program, use Ctrl+C
+  in the terminal instead. All sessions die with the app.
+- **Scrolling back**: each tab keeps 10,000 lines of scrollback, and the
   scrollbar on its right edge is always visible. Scroll with the mouse wheel
   or drag the bar; typing jumps back to the bottom. Programs that take over
   the whole screen (`less`, `vim`) have no scrollback of their own — leave
-  them to get it back. Forge keeps the terminal fitted to its window, so no
+  them to get it back. Forge keeps the terminal fitted to the panel, so no
   lines are ever cut off below the visible area.
 - The terminal's **font size** can be changed on the Settings screen (⚙ in
-  the sidebar). The new size applies when a terminal view is opened — the
-  running session is untouched, and the scrollback is replayed at the new
-  size.
+  the sidebar). The new size applies to tabs opened from then on, and to all
+  tabs after a reload — running sessions are untouched, and the scrollback
+  is replayed at the new size.
 - Claude Code requires a global install (`npm install -g
   @anthropic-ai/claude-code`) and an Anthropic subscription or API key.
   Without it the terminal is still a normal shell.
@@ -193,10 +212,10 @@ works spec-driven from there.
 ### Dev servers
 
 The home screen shows a **dev servers** panel whenever Forge knows about a
-development server: any `http://localhost:…` URL printed in a project's
-terminal session is picked up automatically, probed, and listed with its
-project and an up/down state — so you can see at a glance what is running and
-where. Servers started outside Forge's terminals can be declared in
+development server: any `http://localhost:…` URL printed in one of a project's
+terminal tabs is picked up automatically, probed, and listed with its
+project, the tab it runs in (click it to jump there) and an up/down state — so
+you can see at a glance what is running and where. Servers started outside Forge's terminals can be declared in
 `forge.config.yaml` (see Configuration) and are probed the same way.
 
 ## 5. Working with AI sessions

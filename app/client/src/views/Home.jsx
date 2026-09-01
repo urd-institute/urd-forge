@@ -33,6 +33,15 @@ function DevServers() {
               {s.slug}
             </a>
             {s.label && <span className="muted">{s.label}</span>}
+            {s.tabId && (
+              <a
+                className="muted server-tab"
+                href={'#/p/' + encodeURIComponent(s.slug) + '?tab=' + encodeURIComponent(s.tabId)}
+                title="Open the terminal tab this server runs in"
+              >
+                ▸ {s.tab || 'terminal'}
+              </a>
+            )}
             {s.up ? (
               <a className="mono server-url" href={s.url} target="_blank" rel="noreferrer">
                 {s.url}

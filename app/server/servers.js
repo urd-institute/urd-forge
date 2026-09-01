@@ -57,7 +57,7 @@ function declaredFor(config, slug) {
   return out;
 }
 
-/** All known dev servers with liveness: [{slug, url, port, label, source, up}]. */
+/** All known dev servers with liveness: [{slug, url, port, label, source, up, tabId?, tab?}]. */
 export async function listServers(config, store) {
   const candidates = [];
   const seen = new Set(); // `${slug}:${port}`
@@ -70,13 +70,14 @@ export async function listServers(config, store) {
     }
   }
 
-  for (const { slug, buffer } of liveSessions()) {
+  for (const { slug, tabId, title, buffer } of liveSessions()) {
     if (!store.get(slug)) continue;
     for (const port of detectedPorts(buffer)) {
       if (port === config.port) continue; // Forge itself
       if (seen.has(slug + ':' + port)) continue;
       seen.add(slug + ':' + port);
-      candidates.push({ slug, url: 'http://localhost:' + port, port, label: null, source: 'detected' });
+      // tabId/tab let the overview link straight to the terminal tab (SPEC-03).
+      candidates.push({ slug, url: 'http://localhost:' + port, port, label: null, source: 'detected', tabId, tab: title || null });
     }
   }
 

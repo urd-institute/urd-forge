@@ -81,8 +81,8 @@ export default function Settings() {
           <div className="settings-text">
             <div className="settings-label">Font size</div>
             <p className="muted small">
-              {TERM_FONT_MIN}–{TERM_FONT_MAX} px · applies when a terminal view is (re)opened;
-              running sessions keep going.
+              {TERM_FONT_MIN}–{TERM_FONT_MAX} px · applies to terminal tabs opened from now on (and to
+              all tabs after a reload); running sessions keep going.
             </p>
           </div>
           <div className="stepper" role="group" aria-label="Terminal font size">

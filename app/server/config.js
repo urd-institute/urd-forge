@@ -23,6 +23,10 @@ export function loadConfig(rootDir) {
     // `updates: false` disables self-update entirely — meant for development
     // copies, where the repository is updated by committing, not by pulling.
     updates: raw.updates !== false,
+    // Terminal panel (SPEC-03): how many tabs a project may have open at once.
+    terminal: {
+      maxTabs: Math.min(12, Math.max(1, Number(raw.terminal && raw.terminal.maxTabs) || 6)),
+    },
   };
 }
 

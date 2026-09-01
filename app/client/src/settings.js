@@ -31,6 +31,28 @@ export function termFontSize() {
   return Math.min(TERM_FONT_MAX, Math.max(TERM_FONT_MIN, Math.round(n)));
 }
 
+/* Terminal panel (SPEC-03): open state and height, remembered per browser. */
+export const PANEL_MIN_HEIGHT = 120;
+export const PANEL_MAX_FRACTION = 0.85;
+
+/** 'closed' | 'open' | 'max' — closed until the user first opens it. */
+export function panelMode() {
+  const v = getSetting('panel', 'closed');
+  return v === 'open' || v === 'max' ? v : 'closed';
+}
+
+/** Panel height in px, clamped to what fits in the current window. */
+export function panelHeight() {
+  const n = Number(getSetting('panel-height', 0));
+  const fallback = Math.round(window.innerHeight * 0.4);
+  return clampPanelHeight(Number.isFinite(n) && n > 0 ? n : fallback);
+}
+
+export function clampPanelHeight(px) {
+  const max = Math.max(PANEL_MIN_HEIGHT, Math.round(window.innerHeight * PANEL_MAX_FRACTION));
+  return Math.min(max, Math.max(PANEL_MIN_HEIGHT, Math.round(px)));
+}
+
 /* Color schemes: each is a full palette with a light and a dark variant, so
  * the light/dark theme setting stays independent of the scheme. The default
  * scheme is Forge's paper & ink; the others are token overrides in

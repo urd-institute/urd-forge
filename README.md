@@ -85,8 +85,10 @@ both). Parsing is tolerant: files that deviate are shown as
 3. **Roadmap** — phases with progress bars; every step links to its source file
 4. **Spec board** — specs by status with dependencies; click for rendered markdown
 5. **Search** — free text across all files in all projects
-6. **Command window** — one terminal session per project, started in the
-   project folder (xterm.js + node-pty); preset buttons via `forge.config.yaml`
+6. **Terminal panel** — docked at the bottom of every screen, with several
+   tabs per project (Claude Code in one, a dev server in another), each a
+   shell started in the project folder (xterm.js + node-pty); preset menus
+   via `forge.config.yaml`
 7. **Decision log** — the ADR list from DOCS.md, newest first
 8. **New project** — scaffold a project from a description (Claude Code drafts
    the documents), or import a project zip exported from another Forge
