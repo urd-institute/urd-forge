@@ -1,5 +1,6 @@
 import React from 'react';
 import { marked } from 'marked';
+import { SCHEMES } from '../settings.js';
 
 marked.setOptions({ gfm: true, breaks: false });
 
@@ -64,4 +65,42 @@ export function timeAgo(ms) {
   if (s < 3600) return Math.round(s / 60) + ' min ago';
   if (s < 86400) return Math.round(s / 3600) + ' h ago';
   return new Date(ms).toISOString().slice(0, 10);
+}
+
+/** Swatch buttons for the color schemes (Settings and a project's Overview).
+ *  `allowInherit` adds a first option meaning "follow the browser setting". */
+export function SchemePicker({ value, onChange, allowInherit = false }) {
+  return (
+    <div className="scheme-picker" role="group" aria-label="Color scheme">
+      {allowInherit && (
+        <button
+          type="button"
+          className={'scheme-option' + (value == null ? ' active' : '')}
+          onClick={() => onChange(null)}
+          title="Use the scheme chosen on the Settings screen"
+        >
+          <span className="scheme-swatch inherit" aria-hidden="true">
+            ◐
+          </span>
+          <span>Default</span>
+        </button>
+      )}
+      {SCHEMES.map((s) => (
+        <button
+          key={s.key}
+          type="button"
+          className={'scheme-option' + (value === s.key ? ' active' : '')}
+          onClick={() => onChange(s.key)}
+          title={s.hint}
+        >
+          <span className="scheme-swatch" aria-hidden="true">
+            {s.swatch.map((c) => (
+              <i key={c} style={{ background: c }} />
+            ))}
+          </span>
+          <span>{s.label}</span>
+        </button>
+      ))}
+    </div>
+  );
 }

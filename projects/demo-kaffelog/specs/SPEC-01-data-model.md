@@ -4,6 +4,7 @@ title: Brew data model and storage
 status: done
 depends_on: []
 blocks: [SPEC-02, SPEC-04]
+topics: [data, storage]
 ---
 
 # SPEC-01 — Brew data model and storage

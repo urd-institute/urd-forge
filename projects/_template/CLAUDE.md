@@ -11,9 +11,14 @@ date at all times.
   Mark a step `- [x]` only when its Definition of Done is met. Never delete
   history; add steps instead of rewriting them.
 - Each work area has a spec in `specs/SPEC-xx-<slug>.md` with YAML frontmatter:
-  `id`, `title`, `status` (draft/approved/in-progress/done), `depends_on`,
-  `blocks`. Update `status` as work progresses. No feature work without an
-  approved spec.
+  `id`, `title`, `status` (draft/approved/in-progress/done/superseded), `depends_on`,
+  `blocks` and optionally `topics` (short filter words). Update `status` as
+  work progresses. No feature work without an approved spec. The `/forge
+  <description>` command (`.claude/commands/forge.md`) drafts a new spec;
+  `/forge q SPEC-xx` walks through a spec's open questions one by one.
+- Every question you put to the user — in a spec's "Open questions" or in
+  conversation — comes with 1-3 numbered suggested answers, the recommended
+  one first, so the user can answer with a number.
 - Record every significant technical decision as an ADR in `DOCS.md`
   (`### ADR-xxx — title`), including alternatives considered.
 - Never edit anything under `.forge/` — it is generated.

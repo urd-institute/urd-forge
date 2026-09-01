@@ -4,6 +4,7 @@ title: Read-only share link
 status: draft
 depends_on: [SPEC-03]
 blocks: []
+topics: [sharing, export]
 ---
 
 # SPEC-05 — Read-only share link

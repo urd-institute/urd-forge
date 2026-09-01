@@ -12,7 +12,8 @@ import { WebSocketServer } from 'ws';
 
 import { loadConfig, presetsFor } from './config.js';
 import { Store } from './store.js';
-import { scaffoldProject, importSpec, ScaffoldError } from './scaffold.js';
+import { scaffoldProject, importSpec, installForgeCommand, ScaffoldError } from './scaffold.js';
+import { filterSpecs } from './specfilter.js';
 import { createUpdater, UpdateError } from './update.js';
 import { search } from './search.js';
 import { startWatcher } from './watcher.js';
@@ -85,6 +86,30 @@ api.post('/projects/:slug/specs', (req, res) => {
     if (err instanceof ScaffoldError) return res.status(err.status).json({ error: err.message });
     console.warn('[forge] spec import failed:', err);
     res.status(500).json({ error: 'Could not import the spec: ' + err.message });
+  }
+});
+
+api.get('/projects/:slug/specs/filter', (req, res) => {
+  // Content match for the spec-board filter (SPEC-02 §3.3). Read-only: the
+  // client matches the card fields itself and adds these body hits.
+  if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
+  const q = String(req.query.q || '').trim().slice(0, 200);
+  if (!q) return res.json({ matches: [] });
+  res.json({ matches: filterSpecs(config, req.params.slug, q) });
+});
+
+api.post('/projects/:slug/commands/forge', (req, res) => {
+  // Installs the /forge Claude Code command into an existing project.
+  // File creation only — no command execution over HTTP.
+  if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
+  try {
+    const result = installForgeCommand(config, req.params.slug);
+    store.refresh(req.params.slug);
+    res.status(201).json(result);
+  } catch (err) {
+    if (err instanceof ScaffoldError) return res.status(err.status).json({ error: err.message });
+    console.warn('[forge] command install failed:', err);
+    res.status(500).json({ error: 'Could not install the command: ' + err.message });
   }
 });
 

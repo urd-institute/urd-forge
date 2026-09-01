@@ -76,7 +76,7 @@ export function parseProject(projectsDir, slug) {
     try {
       specs.push(parseSpec(text, file));
     } catch (err) {
-      specs.push({ file, id: null, title: file, status: 'unknown', dependsOn: [], blocks: [], parseError: 'Could not be parsed: ' + err.message });
+      specs.push({ file, id: null, title: file, status: 'unknown', dependsOn: [], blocks: [], topics: [], excerpt: null, parseError: 'Could not be parsed: ' + err.message });
     }
   }
 
@@ -91,6 +91,8 @@ export function parseProject(projectsDir, slug) {
     hasDocs: docs != null,
     hasRoadmap: roadmapText != null,
     hasDesign: readIfExists(path.join(dir, 'DESIGN.md')) != null,
+    // Whether the project has the /forge Claude Code command (SPEC-02 §4).
+    hasForgeCommand: fs.existsSync(path.join(dir, '.claude', 'commands', 'forge.md')),
     roadmap: roadmapText != null ? safeParse(() => parsePhases(roadmapText), 'ROADMAP.md') : null,
     specs,
     changelog: concept != null ? safeParse(() => parseChangelog(concept), 'CONCEPT.md', []) : [],
@@ -100,7 +102,7 @@ export function parseProject(projectsDir, slug) {
     updatedAt: files.length ? files[0].mtime : null,
   };
   project.progress = project.roadmap && project.roadmap.pct != null ? project.roadmap.pct : null;
-  project.openSpecs = specs.filter((s) => s.status !== 'done');
+  project.openSpecs = specs.filter((s) => s.status !== 'done' && s.status !== 'superseded');
   return project;
 }
 

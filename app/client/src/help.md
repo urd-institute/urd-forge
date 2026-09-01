@@ -56,9 +56,10 @@ Forge computes everything from the files, live:
   ---
   id: SPEC-01
   titel: Search           # or: title
-  status: draft           # draft | approved | in-progress | done
+  status: draft           # draft | approved | in-progress | done | superseded
   afhaenger_af: [SPEC-00] # or: depends_on
   blokkerer: []           # or: blocks
+  topics: [auth, ui]      # optional — filter chips on the spec board
   ---
   ```
 
@@ -82,13 +83,36 @@ instead of breaking anything. Fix the format and it reappears.
   elsewhere (e.g. drafted with Claude), assigns the next free SPEC number,
   normalises the frontmatter and files it — optionally handing it straight to
   Claude Code in the terminal to integrate into the roadmap.
+
+  The **filter field** narrows the board: type one or more words and only
+  specs containing *all* of them — in the id, title, topics, dependencies
+  or the spec's content — stay visible. Content hits show a short snippet
+  with the match highlighted; column headers show *shown/total*. `#word`
+  matches topics only. Every `topics` value in the project appears as a
+  **chip** under the header — click chips to show specs with any of those
+  topics (combined with the words). The filter is part of the URL
+  (`…/specs?q=export&topic=auth`), so a reload or a shared link keeps it.
+  Press `/` to jump to the field.
+
+  The rightmost column, **Superseded**, is for specs replaced by a newer
+  one: set `status: superseded` and keep the file — it is history, and
+  it no longer counts as open work.
 - **Decisions** — the ADR log from DOCS.md, newest first.
 - **Terminal** — the command window (next section).
 - **Search** (sidebar) — free text across every file in every project.
   Results link straight to the file.
 - **Settings** (sidebar, the ⚙ gear) — color theme (light / dark / follow
-  system) and the terminal font size. Preferences are stored in the browser,
-  so each browser keeps its own.
+  system), the **color scheme** (seven palettes, each with a light and a
+  dark variant) and the terminal font size. Preferences are stored in the
+  browser, so each browser keeps its own.
+
+### A color scheme per project
+
+Every project's **Overview** has a *Color scheme* card. Pick a palette there
+and Forge switches to it whenever you are inside that project — handy for
+telling projects apart at a glance. *Default* follows the scheme chosen on
+the Settings screen. The choice is stored in this browser, like the other
+preferences; it is not written to the project's files.
 
 ### Archiving a project
 
@@ -113,10 +137,15 @@ works spec-driven from there.
   back, and your scrollback is replayed. All sessions die with the app.
 - **Preset buttons** above the terminal are grouped by topic — *Status*
   (project status, outstanding work), *Tasks* (next task, implement a spec),
-  *Documents* (new spec, consistency check, log a decision) and *Claude Code*.
-  Most of them start a Claude Code session with a ready-made instruction that
-  uses the project's own files. They come from `forge.config.yaml` (built-in
-  defaults if not configured) and are validated server-side.
+  *Documents* (new spec, consistency check, log a decision) and *Claude Code*
+  (start a session; `/model` and `/forge` for a session that is already
+  running). Most of them start a Claude Code session with a ready-made
+  instruction that uses the project's own files. They come from
+  `forge.config.yaml` (built-in defaults if not configured) and are validated
+  server-side.
+- If the project does not have the **/forge** command yet (see §5), a note
+  above the terminal offers to **install** it — one click creates
+  `.claude/commands/forge.md` in the project; nothing else is touched.
 - **Stop session** (under the presets) ends the shell and everything running
   in it — click twice to confirm, then use **Start a new session** to get a
   fresh shell. To interrupt just the running program, use Ctrl+C in the
@@ -145,6 +174,43 @@ where. Servers started outside Forge's terminals can be declared in
 instructs every session to tick roadmap boxes, log ADRs and update spec
 statuses instead of inventing parallel documents. A well-kept CLAUDE.md means
 a fresh AI session maintains the structure with no manual instructions.
+
+### The /forge command
+
+Projects created from Forge ship a Claude Code slash command,
+`.claude/commands/forge.md` (source: `templates/commands/forge.md` in the
+installation). In a running Claude Code session, type
+
+```
+/forge <what the spec should cover>
+```
+
+and Claude drafts a new spec in `specs/`: it reads the concept, roadmap and
+existing specs, takes the next free SPEC number, writes the frontmatter
+(`status: draft`, dependencies, topics) and the standard sections, and adds an
+unchecked step to `ROADMAP.md`. `/forge` on its own asks a few questions
+first. The spec is always a draft — approve it before anything is built from
+it.
+
+**Questions always come with suggestions.** Whenever the command asks you
+something — while drafting, or in the spec's *Open questions* section — it
+attaches 1–3 numbered suggested answers, the recommended one first, so you
+can answer with a number.
+
+**Answer the open questions one by one:**
+
+```
+/forge q SPEC-03
+```
+
+walks through that spec's *Open questions* one at a time (each with its
+suggestions), records every answer in the spec's *Decisions* section as you
+go, removes the answered question, and at the end offers to set the status
+to `approved` if nothing is left open. Say *skip* to leave a question open,
+*stop* to finish early.
+
+Existing projects get the command from the **Install /forge** note in the
+Terminal view; it is an ordinary markdown file you may edit to taste.
 
 ## 6. Configuration
 

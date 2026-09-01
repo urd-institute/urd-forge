@@ -65,6 +65,14 @@ export function scaffoldProject(config, { name, slug, description }) {
     if (content != null) fs.writeFileSync(path.join(dir, file), content);
   }
 
+  // The /forge Claude Code command (SPEC-02 §4). Its source lives in
+  // templates/ because .claude/ is gitignored and cannot ship in _template.
+  try {
+    installForgeCommand(config, slug);
+  } catch {
+    /* optional — the project works without it */
+  }
+
   const forgeDir = path.join(dir, '.forge');
   fs.mkdirSync(forgeDir, { recursive: true });
   fs.writeFileSync(
@@ -172,4 +180,26 @@ export function importSpec(config, projectSlug, { content, area }) {
   fs.writeFileSync(path.join(specsDir, file), text);
 
   return { file, id, title: meta.titel || meta.title, reassigned };
+}
+
+/** Where the /forge command lives inside a project. */
+export function forgeCommandPath(config, projectSlug) {
+  return path.join(config.projectsDir, projectSlug, '.claude', 'commands', 'forge.md');
+}
+
+/**
+ * Install the /forge Claude Code command into an existing project (SPEC-02
+ * §4.3). Creates exactly one file and never overwrites — the project's own
+ * edits to the command are theirs to keep.
+ */
+export function installForgeCommand(config, projectSlug) {
+  const projectDir = path.join(config.projectsDir, projectSlug);
+  if (!fs.existsSync(projectDir)) throw new ScaffoldError(404, 'Unknown project.');
+  const src = path.join(config.rootDir, 'templates', 'commands', 'forge.md');
+  if (!fs.existsSync(src)) throw new ScaffoldError(500, 'The command template (templates/commands/forge.md) is missing.');
+  const dest = forgeCommandPath(config, projectSlug);
+  if (fs.existsSync(dest)) throw new ScaffoldError(409, 'The /forge command is already installed in this project.');
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, fs.readFileSync(src, 'utf8'));
+  return { file: path.relative(projectDir, dest).split(path.sep).join('/') };
 }

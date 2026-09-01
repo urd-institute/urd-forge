@@ -15,7 +15,7 @@ import Update from './views/Update.jsx';
 import Settings from './views/Settings.jsx';
 import Archive from './views/Archive.jsx';
 import { ProgressBar } from './components/bits.jsx';
-import { getSetting, onSettingsChange } from './settings.js';
+import { getSetting, onSettingsChange, schemeFor } from './settings.js';
 
 function parseHash() {
   const raw = location.hash.replace(/^#\/?/, '');
@@ -42,14 +42,16 @@ const NAV = [
   { key: 'terminal', label: 'Terminal' },
 ];
 
-/** Applies the theme setting (chosen on the Settings screen) to the document. */
-function useApplyTheme() {
+/** Applies the theme (light/dark) and the color scheme to the document. The
+ *  scheme follows the project being viewed when it has its own. */
+function useApplyTheme(slug) {
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
       const setting = getSetting('theme', 'system');
       const dark = setting === 'dark' || (setting === 'system' && mq.matches);
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      document.documentElement.dataset.scheme = schemeFor(slug);
     };
     apply();
     mq.addEventListener('change', apply);
@@ -58,7 +60,7 @@ function useApplyTheme() {
       mq.removeEventListener('change', apply);
       off();
     };
-  }, []);
+  }, [slug]);
 }
 
 export default function App() {
@@ -68,7 +70,7 @@ export default function App() {
   const [searchDraft, setSearchDraft] = useState('');
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
-  useApplyTheme();
+  useApplyTheme(route.slug);
 
   useEffect(() => {
     // Quiet cached read — the server checks in the background after start.
@@ -206,7 +208,7 @@ export default function App() {
           <Overview slug={route.slug} tick={tick} onChanged={() => setTick((t) => t + 1)} />
         )}
         {route.slug && route.view === 'roadmap' && <Roadmap slug={route.slug} tick={tick} />}
-        {route.slug && route.view === 'specs' && <Specs slug={route.slug} tick={tick} />}
+        {route.slug && route.view === 'specs' && <Specs key={route.slug} slug={route.slug} tick={tick} />}
         {route.slug && route.view === 'decisions' && <Decisions slug={route.slug} tick={tick} />}
         {route.slug && route.view === 'import-spec' && <ImportSpec slug={route.slug} />}
         {route.slug && route.view === 'terminal' && (

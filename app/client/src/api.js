@@ -12,6 +12,23 @@ export async function api(path) {
   return res.json();
 }
 
+/** POST JSON to the API; resolves with the parsed response. */
+export async function apiPost(path, body) {
+  const res = await fetch('/api' + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  });
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    /* no body */
+  }
+  if (!res.ok) throw new Error((data && data.error) || res.statusText);
+  return data;
+}
+
 /** Subscribe to live update events; returns an unsubscribe function. */
 export function subscribeEvents(onMessage) {
   let ws;

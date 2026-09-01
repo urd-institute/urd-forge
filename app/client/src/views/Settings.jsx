@@ -7,7 +7,10 @@ import {
   TERM_FONT_DEFAULT,
   TERM_FONT_MIN,
   TERM_FONT_MAX,
+  SCHEMES,
+  globalScheme,
 } from '../settings.js';
+import { SchemePicker } from '../components/bits.jsx';
 
 const THEMES = [
   { key: 'light', icon: '☀', label: 'Light' },
@@ -18,6 +21,12 @@ const THEMES = [
 export default function Settings() {
   const [theme, setTheme] = useState(() => getSetting('theme', 'system'));
   const [fontSize, setFontSize] = useState(termFontSize);
+  const [scheme, setScheme] = useState(globalScheme);
+
+  function pickScheme(key) {
+    setScheme(key);
+    setSetting('scheme', key);
+  }
 
   function pickTheme(key) {
     setTheme(key);
@@ -53,6 +62,16 @@ export default function Settings() {
               </button>
             ))}
           </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-text">
+            <div className="settings-label">Color scheme</div>
+            <p className="muted small">
+              {SCHEMES.length} palettes, each with a light and a dark variant. A project can pick its own on
+              its Overview screen.
+            </p>
+          </div>
+          <SchemePicker value={scheme} onChange={pickScheme} />
         </div>
       </section>
 

@@ -4,6 +4,7 @@ title: Export and import
 status: draft
 depends_on: [SPEC-01]
 blocks: []
+topics: [data, export]
 ---
 
 # SPEC-04 — Export and import

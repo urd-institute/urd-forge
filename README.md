@@ -63,14 +63,18 @@ Spec frontmatter (Danish and English keys both accepted):
 ---
 id: SPEC-01
 titel: My area          # or: title
-status: draft           # draft | approved | in-progress | done
+status: draft           # draft | approved | in-progress | done | superseded
 afhaenger_af: [SPEC-00] # or: depends_on
 blokkerer: []           # or: blocks
+topics: [auth, ui]      # optional: filter chips on the spec board
 ---
 ```
 
 Copy `templates/CLAUDE.md` into new projects so AI sessions maintain the
-structure automatically. Parsing is tolerant: files that deviate are shown as
+structure automatically, and `templates/commands/forge.md` into
+`.claude/commands/` to get the `/forge <description>` command, which drafts a
+new spec in a running Claude Code session (projects created from the UI get
+both). Parsing is tolerant: files that deviate are shown as
 "could not be parsed" instead of breaking the UI.
 
 ## Screens

@@ -9,7 +9,9 @@ import {
   useFetch,
   fileLink,
   timeAgo,
+  SchemePicker,
 } from '../components/bits.jsx';
+import { projectScheme, setSetting } from '../settings.js';
 
 export default function Overview({ slug, tick, onChanged }) {
   const { data: project, error } = useFetch(() => api('/projects/' + encodeURIComponent(slug)), [slug, tick]);
@@ -17,6 +19,12 @@ export default function Overview({ slug, tick, onChanged }) {
     () => api('/projects/' + encodeURIComponent(slug) + '/file?path=README.md').catch(() => null),
     [slug, tick]
   );
+  const [scheme, setScheme] = React.useState(() => projectScheme(slug));
+  React.useEffect(() => setScheme(projectScheme(slug)), [slug]);
+  function pickScheme(key) {
+    setScheme(key);
+    setSetting('scheme:' + slug, key || '');
+  }
   const [archiveBusy, setArchiveBusy] = React.useState(false);
   const [archiveError, setArchiveError] = React.useState(null);
 
@@ -105,6 +113,15 @@ export default function Overview({ slug, tick, onChanged }) {
               {archiveBusy ? 'Working…' : project.archived ? 'Restore project' : 'Archive project'}
             </button>
             {archiveError && <p className="error-note small">{archiveError}</p>}
+          </section>
+
+          <section className="card">
+            <h3>Color scheme</h3>
+            <p className="muted small">
+              Give this project its own palette, so you can tell projects apart at a glance. "Default" follows
+              the scheme on the Settings screen. Stored in this browser.
+            </p>
+            <SchemePicker value={scheme} onChange={pickScheme} allowInherit />
           </section>
 
           {project.changelog.length > 0 && (

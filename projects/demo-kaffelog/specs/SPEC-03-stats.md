@@ -4,6 +4,7 @@ title: Stats and comparison view
 status: in-progress
 depends_on: [SPEC-01]
 blocks: [SPEC-05]
+topics: [stats, ui]
 ---
 
 # SPEC-03 — Stats and comparison view

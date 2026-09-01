@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
-import { ViewHeader } from '../components/bits.jsx';
+import { ViewHeader, useFetch } from '../components/bits.jsx';
+import { api, apiPost } from '../api.js';
 import { termFontSize } from '../settings.js';
 
 const BRIEF_COMMAND = 'claude "Read .forge/brief.md and follow the instructions in it."';
@@ -30,6 +31,20 @@ export default function Terminal({ slug, autostart, autostartFile }) {
   const [confirmStop, setConfirmStop] = useState(false);
   // Bumping this restarts the effect below: new WebSocket → new session.
   const [generation, setGeneration] = useState(0);
+  // Whether the project has the /forge Claude Code command (SPEC-02 §4.3).
+  const [forgeTick, setForgeTick] = useState(0);
+  const [forgeError, setForgeError] = useState(null);
+  const { data: project } = useFetch(() => api('/projects/' + encodeURIComponent(slug)), [slug, forgeTick]);
+
+  async function installForge() {
+    setForgeError(null);
+    try {
+      await apiPost('/projects/' + encodeURIComponent(slug) + '/commands/forge');
+      setForgeTick((t) => t + 1);
+    } catch (err) {
+      setForgeError(err.message);
+    }
+  }
 
   useEffect(() => {
     setNotice(null);
@@ -161,6 +176,18 @@ export default function Terminal({ slug, autostart, autostartFile }) {
         )}
       </ViewHeader>
 
+      {project && project.hasForgeCommand === false && !ended && (
+        <div className="pending-command forge-install">
+          <span>
+            <code>/forge</code> is not installed in this project — the Claude Code command that drafts a new spec
+            from a description.
+          </span>
+          <button className="preset" onClick={installForge} title="Creates .claude/commands/forge.md in the project">
+            Install /forge
+          </button>
+          {forgeError && <span className="error-text small">{forgeError}</span>}
+        </div>
+      )}
       {notice && (
         <div className="error-note">
           {notice}

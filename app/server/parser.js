@@ -5,9 +5,9 @@
  * specs/*.md with the Forge statuses and keys. Tolerant like the rest:
  * deviations produce a `parseError` note instead of throwing (SPEC-00 §8).
  */
-import { splitFrontmatter } from '@urd/reader-core';
+import { splitFrontmatter, firstParagraph } from '@urd/reader-core';
 
-const SPEC_STATUSES = ['draft', 'approved', 'in-progress', 'done'];
+const SPEC_STATUSES = ['draft', 'approved', 'in-progress', 'done', 'superseded'];
 
 function asList(value) {
   if (value == null) return [];
@@ -16,6 +16,22 @@ function asList(value) {
     .split(/[,;]/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** Topics are free words: lower-cased, deduplicated; non-list/non-string
+ *  values are ignored rather than reported. */
+function asTopics(value) {
+  if (value == null || (typeof value !== 'string' && !Array.isArray(value))) return [];
+  const seen = new Set();
+  const out = [];
+  for (const raw of asList(value)) {
+    const t = String(raw).trim().replace(/^#/, '').toLowerCase();
+    if (t && !seen.has(t)) {
+      seen.add(t);
+      out.push(t);
+    }
+  }
+  return out;
 }
 
 /** specs/*.md → card for the spec board. YAML frontmatter preferred; falls
@@ -28,6 +44,11 @@ export function parseSpec(text, filename) {
     status: 'unknown',
     dependsOn: [],
     blocks: [],
+    // Optional `topics` (SPEC-02): filter chips on the spec board. Never a
+    // parse error — a wrong type just yields no topics.
+    topics: [],
+    // First real paragraph of the body — used for filter snippets.
+    excerpt: null,
     parseError: null,
   };
 
@@ -43,6 +64,7 @@ export function parseSpec(text, filename) {
       if (meta.status != null) spec.status = String(meta.status).toLowerCase();
       spec.dependsOn = asList(meta.afhaenger_af ?? meta.depends_on ?? meta.dependsOn);
       spec.blocks = asList(meta.blokkerer ?? meta.blocks);
+      spec.topics = asTopics(meta.topics ?? meta.tags ?? meta.emner);
     }
   } else {
     // Tolerant fallback: metadata line like `*id: SPEC-00 · status: approved …*`
@@ -54,6 +76,9 @@ export function parseSpec(text, filename) {
     if (!id && !status) spec.parseError = 'No YAML frontmatter found.';
   }
 
+  // Headings are dropped first so a paragraph directly under "## Purpose"
+  // (no blank line between) still counts as the first paragraph.
+  spec.excerpt = firstParagraph(body.replace(/^#.*$/gm, ''));
   if (!spec.title) {
     const h1 = body.match(/^#\s+(?!#)(.+?)\s*$/m);
     if (h1) spec.title = h1[1];

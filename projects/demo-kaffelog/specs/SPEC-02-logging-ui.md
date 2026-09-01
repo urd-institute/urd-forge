@@ -4,6 +4,7 @@ title: Brew logging UI
 status: done
 depends_on: [SPEC-01]
 blocks: []
+topics: [ui, logging]
 ---
 
 # SPEC-02 — Brew logging UI
