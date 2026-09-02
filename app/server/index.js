@@ -30,13 +30,15 @@ const RESTART_EXIT_CODE = 75;
 const IMPORT_MAX_BYTES = 2 * 1024 * 1024 * 1024;
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = loadConfig(rootDir);
+// Single source of truth for the version shown in the UI and the Updates screen.
+const VERSION = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')).version;
 const store = new Store(config);
 store.scanAll();
 for (const p of store.projects.values()) store.writeCache(p);
 
 await loadPty();
 
-const updater = createUpdater(rootDir, '1.0.0');
+const updater = createUpdater(rootDir, VERSION);
 // Quiet background check shortly after start; failures (offline, not a git
 // clone) are kept in the state and shown on the Updates screen only.
 // Skipped entirely when self-update is disabled (development copies).
@@ -52,7 +54,7 @@ const api = express.Router();
 api.get('/status', (req, res) => {
   res.json({
     app: 'urd-forge',
-    version: '1.0.0',
+    version: VERSION,
     projects: store.projects.size,
     terminal: terminalAvailable(),
     startupMs: Date.now() - started,
@@ -256,7 +258,7 @@ api.get('/projects/:slug/file', (req, res) => {
 
 api.get('/update', async (req, res) => {
   if (!config.updates) {
-    return res.json({ disabled: true, available: false, current: { version: '1.0.0' }, supervised });
+    return res.json({ disabled: true, available: false, current: { version: VERSION }, supervised });
   }
   if (req.query.check === '1') await updater.check();
   res.json({ ...updater.getState(), supervised });

@@ -86,6 +86,7 @@ export default function App() {
   const [tick, setTick] = useState(0); // bumped on file-watcher events → views refetch
   const [searchDraft, setSearchDraft] = useState('');
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [version, setVersion] = useState('');
   // The terminal panel follows the selected project; on screens without one
   // (Home, Help, Updates…) it keeps showing the last project's sessions.
   const [lastSlug, setLastSlug] = useState(null);
@@ -121,7 +122,10 @@ export default function App() {
     const t = setTimeout(() => {
       fetch('/api/update')
         .then((r) => r.json())
-        .then((s) => setUpdateAvailable(Boolean(s.available)))
+        .then((s) => {
+          setUpdateAvailable(Boolean(s.available));
+          if (s.current && s.current.version) setVersion(s.current.version);
+        })
         .catch(() => {});
     }, 5000);
     return () => clearTimeout(t);
@@ -242,7 +246,7 @@ export default function App() {
 
         <div className="side-footer">
           <span>
-            <span className="mono">urd-forge v1</span> · URD Institute
+            <span className="mono">urd-forge{version ? ' v' + version : ''}</span> · URD Institute
           </span>
         </div>
       </aside>

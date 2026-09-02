@@ -759,7 +759,10 @@ code { font-family: var(--mono); background: var(--paper-deep); padding: 1px 4px
   border-bottom: 1px solid var(--line);
   background: var(--paper-deep);
 }
+.panel-tabs-row { display: flex; align-items: stretch; min-width: 0; }
 .panel-tabs { display: flex; align-items: stretch; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.panel-new-wrap { display: flex; align-items: stretch; flex: none; }
+.panel-tab-new-caret { padding: 4px 6px 4px 0; }
 .panel-tab {
   display: flex;
   align-items: center;

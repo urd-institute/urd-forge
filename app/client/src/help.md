@@ -169,8 +169,9 @@ spec-driven from there.
   project menu does), **⤡** restores it. Size and state are remembered in
   this browser.
 - **Tabs**: a project can have several sessions at once — Claude Code in one
-  tab, `npm run dev` in another. **+** opens a new tab: an empty shell, or one
-  that starts with a preset. In the panel, **Alt+N** opens an empty tab and
+  tab, `npm run dev` in another. **+** opens a new tab with an empty shell
+  at once; the **▾** next to it opens a new tab that starts with a preset.
+  In the panel, **Alt+N** opens an empty tab and
   **Alt+1…9** switches. Tabs are named after the preset that started them
   (or *Terminal N*); programs that set a window title (Claude Code does)
   rename the tab, and **double-click** gives it a name of your own that

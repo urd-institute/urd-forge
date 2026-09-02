@@ -1,6 +1,6 @@
 {
   "name": "urd-forge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "URD Forge — the open web interface for spec-driven AI development. Reads, visualises and searches spec-driven project files; the files are the database.",
   "author": "URD Institute (https://urdinstitute.org)",
   "homepage": "https://github.com/urd-institute/urd-forge",

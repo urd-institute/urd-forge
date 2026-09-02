@@ -440,6 +440,7 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
 
       {shown && (
       <div className="panel-header">
+        <div className="panel-tabs-row">
         <div className="panel-tabs" role="tablist">
           {tabs.map((t, i) => (
             <div
@@ -486,37 +487,48 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
               </button>
             </div>
           ))}
-          <div className="panel-menu-wrap" ref={openMenu === 'new' ? menuEl : null}>
+        </div>
+        {/* Outside the scrolling tab strip: `overflow-x: auto` there would clip
+            the dropdown. Plain + opens a shell at once; the caret picks a preset. */}
+        <div className="panel-menu-wrap panel-new-wrap" ref={openMenu === 'new' ? menuEl : null}>
+          <button
+            className="panel-tab-new"
+            onClick={() => openTab()}
+            disabled={!available || liveCount >= maxTabs}
+            title={liveCount >= maxTabs ? 'Tab limit reached (' + maxTabs + ')' : 'New terminal tab (Alt+N)'}
+          >
+            +
+          </button>
+          {presets.length > 0 && (
             <button
-              className="panel-tab-new"
-              onClick={(e) => {
-                if (e.shiftKey || presets.length === 0) openTab();
-                else setOpenMenu(openMenu === 'new' ? null : 'new');
-              }}
+              className="panel-tab-new panel-tab-new-caret"
+              onClick={() => setOpenMenu(openMenu === 'new' ? null : 'new')}
               disabled={!available || liveCount >= maxTabs}
-              title={liveCount >= maxTabs ? 'Tab limit reached (' + maxTabs + ')' : 'New tab (Alt+N) · pick a preset to start it with'}
+              title="New tab started with a preset"
             >
-              + <span className="panel-caret-small">▾</span>
+              <span className="panel-caret-small">▾</span>
             </button>
-            {openMenu === 'new' && (
-              <div className="panel-menu">
-                <button className="panel-menu-item" onClick={() => openTab()}>
-                  <span>Empty shell</span>
-                  <span className="mono muted small">Alt+N</span>
-                </button>
-                {presets.map((g, gi) => (
-                  <React.Fragment key={g.group || gi}>
-                    <div className="panel-menu-group mono">{g.group}</div>
-                    {g.items.map((p) => (
-                      <button key={p.label} className="panel-menu-item" onClick={() => runPreset(p, true)} title={p.command}>
-                        {p.label}
-                      </button>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
+          {openMenu === 'new' && (
+            <div className="panel-menu">
+              <button className="panel-menu-item" onClick={() => { setOpenMenu(null); openTab(); }}>
+                <span>Empty shell</span>
+                <span className="mono muted small">Alt+N</span>
+              </button>
+              {presets.map((g, gi) => (
+                <React.Fragment key={g.group || gi}>
+                  <div className="panel-menu-group mono">{g.group}</div>
+                  {g.items.map((p) => (
+                    <button key={p.label} className="panel-menu-item" onClick={() => runPreset(p, true)} title={p.command}>
+                      {p.label}
+                    </button>
+                  ))}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+        </div>
+
         </div>
 
         <div className="panel-tools">
