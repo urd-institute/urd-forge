@@ -22,7 +22,7 @@ function isPanelShortcut(ev) {
 }
 
 const TerminalTab = forwardRef(function TerminalTab(
-  { slug, tabId, title, active, initialCommand, viaPreset, generation, onReady, onExit, onTitle, onActivity, onUnavailable },
+  { slug, tabId, title, active, initialCommand, initialMessage, viaPreset, generation, onReady, onExit, onTitle, onActivity, onUnavailable, onNotice },
   ref
 ) {
   const holder = useRef(null);
@@ -33,7 +33,7 @@ const TerminalTab = forwardRef(function TerminalTab(
   activeRef.current = active;
   // Callbacks change every render; keep the latest without restarting the session.
   const cbs = useRef({});
-  cbs.current = { onReady, onExit, onTitle, onActivity, onUnavailable };
+  cbs.current = { onReady, onExit, onTitle, onActivity, onUnavailable, onNotice };
 
   useImperativeHandle(ref, () => ({
     runPreset(command) {
@@ -49,9 +49,9 @@ const TerminalTab = forwardRef(function TerminalTab(
       if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'kill', close: Boolean(close) }));
     },
     // The tab name lives on the server so it survives reloads (SPEC-03 §4.2).
-    setTitle(title) {
+    setTitle(title, locked) {
       const ws = wsRef.current;
-      if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'title', title }));
+      if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'title', title, locked: Boolean(locked) }));
     },
     fit() {
       if (fitRef.current) fitRef.current();
@@ -113,16 +113,22 @@ const TerminalTab = forwardRef(function TerminalTab(
       } else if (msg.type === 'ready') {
         if (cbs.current.onReady) cbs.current.onReady(msg);
         // A command to run in a brand-new tab (a preset launched "in new
-        // tab", or the autostart after creating/importing). Only when the
-        // session is fresh: a reattached session is never typed into.
-        if (initialCommand && msg.fresh && !started) {
+        // tab", or the autostart after creating/importing), or a message
+        // the server turns into a command itself (agent runs, SPEC-04).
+        // Only when the session is fresh: a reattached session is never
+        // typed into.
+        if ((initialCommand || initialMessage) && msg.fresh && !started) {
           started = true;
           setTimeout(() => {
             if (ws.readyState !== 1) return;
-            if (viaPreset) ws.send(JSON.stringify({ type: 'preset', command: initialCommand }));
+            if (initialMessage) ws.send(JSON.stringify(initialMessage));
+            else if (viaPreset) ws.send(JSON.stringify({ type: 'preset', command: initialCommand }));
             else ws.send(JSON.stringify({ type: 'input', data: initialCommand + '\r' }));
           }, 600);
         }
+      } else if (msg.type === 'notice') {
+        // The server declined a message (e.g. an agent that is already running).
+        if (cbs.current.onNotice) cbs.current.onNotice(msg.message);
       } else if (msg.type === 'unavailable') {
         if (cbs.current.onUnavailable) cbs.current.onUnavailable(msg.message);
       } else if (msg.type === 'exit') {

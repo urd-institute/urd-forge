@@ -74,7 +74,7 @@ function Highlight({ text, words }) {
   return text.split(re).map((part, i) => (plain.includes(part.toLowerCase()) ? <mark key={i}>{part}</mark> : part));
 }
 
-export default function Specs({ slug, tick }) {
+export default function Specs({ slug, tick, panel }) {
   const { data: project, error } = useFetch(() => api('/projects/' + encodeURIComponent(slug)), [slug, tick]);
   const initial = useMemo(readFilterFromHash, [slug]);
   const [text, setText] = useState(initial.text);
@@ -221,7 +221,7 @@ export default function Specs({ slug, tick }) {
                 <span className="mono muted">{filtering ? shown.length + '/' + cards.length : cards.length}</span>
               </div>
               {shown.map((s) => (
-                <SpecCard key={s.file} spec={s} slug={slug} words={words} snippet={visible.get(s.file).snippet} />
+                <SpecCard key={s.file} spec={s} slug={slug} words={words} snippet={visible.get(s.file).snippet} panel={panel} />
               ))}
             </div>
           );
@@ -249,9 +249,25 @@ export default function Specs({ slug, tick }) {
   );
 }
 
-function SpecCard({ spec, slug, words = [], snippet = null }) {
+function SpecCard({ spec, slug, words = [], snippet = null, panel = null }) {
+  // "Create agent" (SPEC-04 §A.2): a Claude Code session drafts an agent
+  // that keeps the project in line with this spec. Sits inside the card
+  // link, so it must not navigate.
+  function createAgent(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const p = panel && panel.current;
+    if (!p || !spec.id || !/^[A-Za-z0-9._-]+$/.test(spec.id)) return;
+    const id = p.openTab({ title: 'New agent', command: 'claude "/forge agent from ' + spec.id + '"' });
+    if (id) p.show('open');
+  }
   return (
     <a className="card spec-card" href={fileLink(slug, 'specs/' + spec.file)}>
+      {panel && spec.id && !spec.parseError && (
+        <button className="spec-card-agent mono" onClick={createAgent} title={'Draft an agent from ' + spec.id + ' (/forge agent from ' + spec.id + ')'}>
+          + agent
+        </button>
+      )}
       <div className="mono spec-id">
         <Highlight text={spec.id || spec.file} words={words} />
       </div>

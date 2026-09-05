@@ -16,6 +16,12 @@ date at all times.
   work progresses. No feature work without an approved spec. The `/forge
   <description>` command (`.claude/commands/forge.md`) drafts a new spec;
   `/forge q SPEC-xx` walks through a spec's open questions one by one.
+- Agents live in `agents/<id>.md` (frontmatter `name`, `description`,
+  `schedule`, `enabled`; sections `## How it works`, `## Instructions`,
+  `## When approved`). Forge runs them and they write findings to
+  `agents/suggestions/S-NNN-<slug>.md` with a `status` (open / approved /
+  in-progress / done / not-approved / archived). `/forge agent <description>`
+  drafts a new agent; `/forge agent from SPEC-xx` drafts one that guards a spec.
 - Every question you put to the user — in a spec's "Open questions" or in
   conversation — comes with 1-3 numbered suggested answers, the recommended
   one first, so the user can answer with a number.

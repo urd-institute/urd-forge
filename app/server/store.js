@@ -16,6 +16,7 @@ import {
 import { parseSpec } from './parser.js';
 import { LocalState } from './state.js';
 import { installForgeCommand } from './scaffold.js';
+import { readAgents, readSuggestions, ensureStandardAgents } from './agents.js';
 
 const IGNORED_DIRS = new Set(['.forge', '.git', 'node_modules', '.claude']);
 
@@ -83,6 +84,11 @@ export function parseProject(projectsDir, slug) {
 
   const files = walkFiles(dir, '', []).sort((a, b) => b.mtime - a.mtime);
 
+  // Agents and their suggestions (SPEC-04) — sections and bodies are left
+  // out here; the agents endpoint serves the full files.
+  const agents = readAgents(dir).map(({ how, instructions, whenApproved, ...a }) => a);
+  const suggestions = readSuggestions(dir).map(({ body, ...s }) => s);
+
   const project = {
     slug,
     name: projectName(readme, slug),
@@ -96,6 +102,9 @@ export function parseProject(projectsDir, slug) {
     hasForgeCommand: fs.existsSync(path.join(dir, '.claude', 'commands', 'forge.md')),
     roadmap: roadmapText != null ? safeParse(() => parsePhases(roadmapText), 'ROADMAP.md') : null,
     specs,
+    agents,
+    suggestions,
+    openSuggestionCount: suggestions.filter((s) => s.status === 'open').length,
     changelog: concept != null ? safeParse(() => parseChangelog(concept), 'CONCEPT.md', []) : [],
     adrs: docs != null ? safeParse(() => parseHeadingLog(docs, 'ADR'), 'DOCS.md', []) : [],
     recentFiles: files.slice(0, 10),
@@ -153,6 +162,7 @@ export class Store {
       return null;
     }
     this.ensureForgeCommand(slug);
+    this.ensureAgents(slug);
     const project = parseProject(this.config.projectsDir, slug);
     this.projects.set(slug, project);
     if (writeCache) this.writeCache(project);
@@ -176,6 +186,22 @@ export class Store {
       console.log(`[forge] Installed /forge command in projects/${slug}`);
     } catch (err) {
       console.warn(`[forge] Could not install /forge in projects/${slug}:`, err.message);
+    }
+  }
+
+  /**
+   * The standard agents (SPEC-04 §D) go the same way as /forge: copied from
+   * templates/agents/ into any project that lacks them, never overwritten,
+   * `_template` left alone. Unlike the command they are tracked project
+   * files — a project may edit or delete its copy, and `agents.disabled` in
+   * forge.config.yaml keeps a deleted one from coming back.
+   */
+  ensureAgents(slug) {
+    try {
+      const installed = ensureStandardAgents(this.config, slug);
+      if (installed.length) console.log(`[forge] Installed standard agents in projects/${slug}: ${installed.join(', ')}`);
+    } catch (err) {
+      console.warn(`[forge] Could not install standard agents in projects/${slug}:`, err.message);
     }
   }
 
@@ -224,6 +250,7 @@ export class Store {
         progress: p.progress,
         specCount: p.specs.length,
         openSpecCount: p.openSpecs.length,
+        openSuggestionCount: p.openSuggestionCount,
         updatedAt: p.updatedAt,
         archived: state.isArchived(p.slug),
         pinned: state.isPinned(p.slug),

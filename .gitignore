@@ -13,12 +13,16 @@ _doc/
 /DOCS.md
 /DESIGN.md
 /specs/
+/agents/
 
 # Users' own projects stay local — only the template and the demo ship.
 /projects/*
 !/projects/.gitkeep
 !/projects/_template/
 !/projects/demo-kaffelog/
+# Standard agents are installed into the demo by Forge at runtime (SPEC-04);
+# keeping them out of the repo means an update can never collide with them.
+/projects/demo-kaffelog/agents/
 
 # Local configuration stays local — copy forge.config.example.yaml to start.
 /forge.config.yaml

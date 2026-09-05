@@ -37,6 +37,7 @@ export function terminalAvailable() {
 const SCROLLBACK_LIMIT = 1_000_000;
 const TAB_ID_RE = /^[a-z0-9]{4,16}$/;
 const TITLE_MAX = 40;
+const EOL = process.platform === 'win32' ? '\r' : '\n';
 // slug → Map<tabId, { pty, buffer, clients:Set<ws>, dead, tabId, title, createdAt }>
 const sessions = new Map();
 
@@ -47,7 +48,7 @@ export function onTabEvent(fn) {
   tabListener = fn;
 }
 function emitTab(slug, session, event) {
-  if (tabListener) tabListener({ type: 'terminal-tab', slug, tabId: session.tabId, title: session.title, event });
+  if (tabListener) tabListener({ type: 'terminal-tab', slug, tabId: session.tabId, title: session.title, locked: Boolean(session.locked), event });
 }
 
 function defaultShell() {
@@ -121,7 +122,53 @@ function getSession(slug, tabId, cwd, cols, rows, title) {
   return session;
 }
 
-export function attachTerminal(ws, { slug, tabId, cwd, cols, rows, presets, maxTabs, title }) {
+/** Server-generated tab id (the client normally makes its own, SPEC-03 §4.1). */
+function newTabId() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let id = '';
+  for (let i = 0; i < 8; i += 1) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+
+/**
+ * Start a tab without a browser attached — scheduled agent runs (SPEC-04
+ * §B.2). The tab is announced over the events socket like any other, so an
+ * open panel picks it up and attaches with replay. Throws when the terminal
+ * is unavailable or the project is at its tab limit.
+ */
+export function spawnSession(slug, { cwd, title, cols, rows, maxTabs }) {
+  if (!ptyLib) throw new Error('Terminal is unavailable: node-pty could not be loaded.');
+  const limit = Math.max(1, Number(maxTabs) || 6);
+  if (liveCount(slug) >= limit) {
+    throw new Error('This project already has ' + limit + ' terminal tabs open (terminal.maxTabs).');
+  }
+  let tabId = newTabId();
+  while (projectTabs(slug).has(tabId)) tabId = newTabId();
+  const session = getSession(slug, tabId, cwd, cols || 120, rows || 40, title);
+  // The agent's name stays on the tab; programs' window titles do not replace it.
+  session.locked = true;
+  return session;
+}
+
+export function findSession(slug, tabId) {
+  const s = projectTabs(slug).get(tabId);
+  return s && !s.dead ? s : null;
+}
+
+/** Type a command line into a session, as if entered at the prompt. */
+export function writeCommand(session, command) {
+  if (!session || session.dead) return false;
+  session.pty.write(command + EOL);
+  return true;
+}
+
+/** Subscribe to a session's end; returns a disposer. */
+export function onSessionExit(session, fn) {
+  const sub = session.pty.onExit(({ exitCode }) => fn(exitCode));
+  return () => sub.dispose();
+}
+
+export function attachTerminal(ws, { slug, tabId, cwd, cols, rows, presets, maxTabs, title, onMessage }) {
   const refuse = (message) => {
     ws.send(JSON.stringify({ type: 'unavailable', message }));
     ws.close();
@@ -201,10 +248,22 @@ export function attachTerminal(ws, { slug, tabId, cwd, cols, rows, presets, maxT
     } else if (msg.type === 'title' && typeof msg.title === 'string') {
       // Tab name (from a preset label, the program's OSC title, or the user).
       // Kept server-side so it survives reloads and is shared between windows.
+      // A locked name (an agent's, or one the user typed) only changes on an
+      // explicit rename (`locked: true`) — never from a program's window title.
       const title = cleanTitle(msg.title);
-      if (title !== session.title) {
+      if (title !== session.title && (!session.locked || msg.locked === true)) {
         session.title = title;
+        if (msg.locked === true) session.locked = true;
         emitTab(slug, session, 'title');
+      }
+    } else if (onMessage && typeof msg.type === 'string') {
+      // Anything else (agent runs, SPEC-04): the caller decides, and builds
+      // whatever gets typed into the pty from files on disk — never from
+      // the message itself.
+      try {
+        onMessage(msg, session);
+      } catch (err) {
+        if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'notice', message: err.message }));
       }
     }
   });
@@ -219,7 +278,7 @@ export function attachTerminal(ws, { slug, tabId, cwd, cols, rows, presets, maxT
 export function listTabs(slug) {
   const out = [];
   for (const s of projectTabs(slug).values()) {
-    if (!s.dead) out.push({ tabId: s.tabId, title: s.title, createdAt: s.createdAt, alive: true });
+    if (!s.dead) out.push({ tabId: s.tabId, title: s.title, locked: Boolean(s.locked), createdAt: s.createdAt, alive: true });
   }
   return out.sort((a, b) => a.createdAt - b.createdAt);
 }

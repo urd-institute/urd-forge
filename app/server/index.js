@@ -21,6 +21,16 @@ import { search } from './search.js';
 import { startWatcher } from './watcher.js';
 import { loadPty, terminalAvailable, attachTerminal, killAll, listTabs, onTabEvent } from './terminal.js';
 import { listServers } from './servers.js';
+import {
+  AgentRunner,
+  AgentError,
+  SUGGESTION_STATUSES,
+  agentFile,
+  suggestionFile,
+  patchFrontmatter,
+  readSuggestions,
+  validSchedule,
+} from './agents.js';
 
 const started = Date.now();
 // Set by the `npm run forge` supervisor: exiting with this code makes it
@@ -232,6 +242,78 @@ api.get('/projects/:slug/terminals', (req, res) => {
   res.json({ tabs: listTabs(req.params.slug), maxTabs: config.terminal.maxTabs });
 });
 
+// ── Agents (SPEC-04) ───────────────────────────────────────────────────────
+// Reads are plain file reads; the two PATCH routes edit one frontmatter
+// field each. Runs are never started over HTTP — the browser opens a
+// terminal tab and names the agent on that WebSocket (see the upgrade
+// handler), and the server builds the command from the files on disk.
+api.get('/projects/:slug/agents', (req, res) => {
+  if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
+  res.json({
+    agents: runner.describeAgents(req.params.slug),
+    suggestions: readSuggestions(path.join(config.projectsDir, req.params.slug)),
+    maxSuggestionsPerRun: config.agents.maxSuggestionsPerRun,
+    terminal: terminalAvailable(),
+  });
+});
+
+api.get('/projects/:slug/agents/:id', (req, res) => {
+  if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
+  const agent = runner.describeAgents(req.params.slug).find((a) => a.id === req.params.id);
+  if (!agent) return res.status(404).json({ error: 'Unknown agent' });
+  res.json(agent);
+});
+
+api.patch('/projects/:slug/agents/:id', (req, res) => {
+  // `enabled` and `schedule` only — a frontmatter edit, nothing else.
+  if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
+  const body = req.body || {};
+  const fields = {};
+  if (body.enabled != null) fields.enabled = Boolean(body.enabled);
+  if (body.schedule != null) {
+    const s = String(body.schedule).trim().toLowerCase();
+    if (!validSchedule(s)) return res.status(400).json({ error: 'Schedule must be off, daily, weekly, monthly or a 5-field cron expression.' });
+    fields.schedule = s;
+  }
+  if (!Object.keys(fields).length) return res.status(400).json({ error: 'Nothing to change (enabled, schedule).' });
+  try {
+    patchFrontmatter(agentFile(config, req.params.slug, req.params.id), fields);
+    store.refresh(req.params.slug);
+    res.json({ id: req.params.id, ...fields });
+  } catch (err) {
+    if (err instanceof AgentError) return res.status(err.status).json({ error: err.message });
+    console.warn('[forge] agent update failed:', err);
+    res.status(500).json({ error: 'Could not update the agent: ' + err.message });
+  }
+});
+
+api.get('/projects/:slug/suggestions', (req, res) => {
+  if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
+  res.json({ suggestions: readSuggestions(path.join(config.projectsDir, req.params.slug)) });
+});
+
+api.patch('/projects/:slug/suggestions/:id', (req, res) => {
+  // `status` only. `decided` follows: set on a decision, cleared on reopen.
+  if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
+  const status = String((req.body && req.body.status) || '').toLowerCase().trim();
+  if (!SUGGESTION_STATUSES.includes(status)) {
+    return res.status(400).json({ error: 'Status must be one of: ' + SUGGESTION_STATUSES.join(', ') + '.' });
+  }
+  try {
+    const { file, suggestion } = suggestionFile(config, req.params.slug, req.params.id);
+    const fields = { status };
+    if (['approved', 'not-approved', 'archived'].includes(status)) fields.decided = new Date().toISOString().slice(0, 10);
+    else if (status === 'open') fields.decided = '';
+    patchFrontmatter(file, fields);
+    store.refresh(req.params.slug);
+    res.json({ id: suggestion.id, agent: suggestion.agent, ...fields });
+  } catch (err) {
+    if (err instanceof AgentError) return res.status(err.status).json({ error: err.message });
+    console.warn('[forge] suggestion update failed:', err);
+    res.status(500).json({ error: 'Could not update the suggestion: ' + err.message });
+  }
+});
+
 api.get('/projects/:slug/presets', (req, res) => {
   if (!store.get(req.params.slug)) return res.status(404).json({ error: 'Unknown project' });
   res.json({ presets: presetsFor(config, req.params.slug), terminal: terminalAvailable() });
@@ -350,6 +432,9 @@ server.on('upgrade', (req, socket, head) => {
         rows: Number(url.searchParams.get('rows')) || 30,
         presets: presetsFor(config, slug),
         maxTabs: config.terminal.maxTabs,
+        // Agent runs (SPEC-04): the message names an agent or suggestion id;
+        // the runner reads the files and types the command itself.
+        onMessage: (msg, session) => runner.handleMessage(slug, msg, session),
       });
     });
   } else {
@@ -366,6 +451,8 @@ function broadcast(msg) {
 
 startWatcher(config, store, broadcast);
 onTabEvent(broadcast);
+const runner = new AgentRunner(config, store, broadcast);
+runner.start();
 
 server.listen(config.port, '127.0.0.1', () => {
   const term = terminalAvailable();
@@ -378,6 +465,7 @@ server.listen(config.port, '127.0.0.1', () => {
 });
 
 function shutdown() {
+  runner.stop();
   killAll();
   process.exit(0);
 }

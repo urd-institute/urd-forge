@@ -90,7 +90,11 @@ both). Parsing is tolerant: files that deviate are shown as
    shell started in the project folder (xterm.js + node-pty); preset menus
    via `forge.config.yaml`
 7. **Decision log** — the ADR list from DOCS.md, newest first
-8. **New project** — scaffold a project from a description (Claude Code drafts
+8. **Agents** — file-defined agents (`agents/*.md`; Security, Docs and Spec
+   Drift ship as standard) run manually or on a schedule as Claude Code
+   sessions in the terminal panel, and their suggestions are reviewed here:
+   approve (the agent carries it out), draft a spec, decline or archive
+9. **New project** — scaffold a project from a description (Claude Code drafts
    the documents), or import a project zip exported from another Forge
    installation
 
@@ -106,7 +110,9 @@ never touch it.
 
 Localhost binding only. No command execution via the HTTP API — the terminal
 runs over a dedicated WebSocket, and preset commands are validated against the
-server-side configuration. Sessions die with the app. A hosted edition needs
+server-side configuration. Agent runs are built server-side from the agent
+files (the browser only names an agent), and headless runs get Claude Code
+permission rules that allow writes under `agents/suggestions/` only. Sessions die with the app. A hosted edition needs
 its own security spec (v2).
 
 ## License

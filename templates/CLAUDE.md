@@ -33,6 +33,12 @@ Keep the structure machine-readable — every AI session must maintain it:
   ```
 
   Update `status` as work progresses. Never renumber existing specs.
+- **agents/<id>.md** — agents Forge can run manually or on a schedule (name,
+  description, schedule in the frontmatter; `## How it works`,
+  `## Instructions`, `## When approved` sections). Their findings land in
+  **agents/suggestions/S-NNN-<slug>.md** with a `status` (open | approved |
+  in-progress | done | not-approved | archived) that is reviewed in Forge.
+  Draft a new agent with `/forge agent <description>`.
 - **.forge/** — Forge's generated cache. Never edit or commit content here by hand.
 
 Rules for every session:

@@ -29,7 +29,8 @@ projects/
     ├── ROADMAP.md     # phases and steps → progress
     ├── DOCS.md        # living docs + decision log
     ├── DESIGN.md      # optional: design tokens
-    └── specs/         # one spec per area
+    ├── specs/         # one spec per area
+    └── agents/        # agents (installed by Forge) and their suggestions/
 ```
 
 Forge discovers the folder immediately — no restart, no registration.
@@ -98,6 +99,8 @@ instead of breaking anything. Fix the format and it reappears.
   one: set `status: superseded` and keep the file — it is history, and
   it no longer counts as open work.
 - **Decisions** — the ADR log from DOCS.md, newest first.
+- **Agents** — the project's agents and the suggestions they made (§6).
+  The badge on the menu entry counts open suggestions.
 - **Terminal** — the command window (next section).
 - **Search** (sidebar) — free text across every file in every project.
   Results link straight to the file.
@@ -268,7 +271,67 @@ The command is an ordinary markdown file you may edit to taste — your edits
 are kept. (`_template` is the one folder Forge leaves without it.) If the file
 could not be created, the terminal panel shows an **Install /forge** note.
 
-## 6. Configuration
+## 6. Agents and suggestions
+
+An **agent** is a small role Claude Code can play on its own initiative: it
+reads the project, looks for one kind of thing (security risks, documentation
+drift, code that strays from the specs) and comes back with **suggestions**.
+Nothing is changed until you approve one. The **Agents** screen in the project
+menu has two tabs.
+
+**Agents.** One card per agent file in `agents/`: its description, schedule,
+last run, and the controls.
+
+- **Run now** opens a terminal tab and runs the agent headless (`claude -p`):
+  it may read the project and run a few read-only commands, but the only
+  files it can write are suggestion files — Forge passes Claude Code the
+  matching permission rules. **Run interactively** starts a normal Claude
+  Code session with the same instructions, for agents that need questions
+  answered. Either way the run is a tab in the panel: watch it, or stop it
+  like any session.
+- **Schedule**: daily (09:00), weekly (Monday 09:00), monthly (the 1st) or a
+  5-field cron expression. Forge runs due agents itself, in a tab named
+  *"<agent> (scheduled)"*, while it is running; an agent that missed its
+  time while Forge was off runs once at the next start. Standard agents are
+  installed **unscheduled** — nothing runs until you switch it on. **enabled**
+  off pauses an agent without losing its schedule.
+- **Open** shows the agent's three sections as written in its file — *How it
+  works*, *Instructions* (the prompt it gets), *When approved* (what it does
+  with an approved suggestion) — and its run history (`.forge/agents/`).
+- **Add an agent**: describe what it should look for and Claude Code drafts
+  the file with `/forge agent <description>`; or pick a spec and get an agent
+  that guards that spec (`/forge agent from SPEC-NN` — also available as
+  **+ agent** on a spec card). Agent files are ordinary markdown you can edit.
+
+**Standard agents** come with Forge (`templates/agents/`) and are installed
+into every project that lacks them — never overwritten, so your edits stay,
+and `agents.disabled` in `forge.config.yaml` keeps one from coming back if
+you delete it: the **Security Agent** (secrets, unsafe defaults, injection
+paths, vulnerable dependencies), the **Docs Agent** (prose that no longer
+matches the code) and the **Spec Drift Agent** (code that no longer matches
+the specs).
+
+**Suggestions.** Each suggestion is a file in `agents/suggestions/`
+(`S-NNN-<slug>.md`) with a *What*, a *Why* with evidence, and a *Proposed
+change*. The tab lists them by status — *Open* by default — and each has
+actions:
+
+- **Approve** marks it approved and opens a terminal tab where the agent that
+  made it carries it out (an interactive Claude Code session, so its edits go
+  through the usual permission prompts; an agent can opt into unattended
+  approval runs with `approvalMode: headless`). The agent sets the status to
+  *in-progress* and then *done*, and appends a *Result* section to the file.
+- **Draft spec** opens a tab with `/forge` and the suggestion as its brief —
+  for suggestions too big to just do. The resulting spec is linked from the
+  suggestion (`spec:` in its frontmatter).
+- **Not approved** is a decision the agent remembers: it will not propose the
+  same thing again. **Archive** just tidies a suggestion away. **Reopen**
+  brings any of them back.
+
+The home screen shows an open-suggestion count on each project card. A
+suggestion run writes at most five suggestions (`agents.maxSuggestionsPerRun`).
+
+## 7. Configuration
 
 `forge.config.yaml` in the installation root:
 
@@ -287,11 +350,16 @@ servers:            # dev servers started outside Forge's terminals
     - http://localhost:3000
     - label: API    # optional label
       url: http://localhost:8080
+agents:
+  maxSuggestionsPerRun: 5   # per agent run
+  disabled: [docs-agent]    # standard agents never (re)installed — or per slug:
+  # disabled:
+  #   my-project: [security-agent]
 ```
 
 Everything has defaults; the file may be empty.
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 - **"Could not be parsed"** — the file deviates from the format above. The
   most common causes: a spec without frontmatter, or a roadmap without
@@ -306,7 +374,7 @@ Everything has defaults; the file may be empty.
 - **Nothing updates** — the file watcher follows the `projects/` folder of
   the running installation. Check that you are editing files inside it.
 
-## 8. Updating Forge
+## 9. Updating Forge
 
 **Updates** in the sidebar checks the official repository
 (github.com/urd-institute/urd-forge) for new versions. An update only installs
@@ -320,7 +388,7 @@ was started with `npm run forge` (the normal way); started any other way, only
 stop is available. Development copies can opt out of updates entirely with
 `updates: false` in `forge.config.yaml`.
 
-## 9. Principles worth keeping
+## 10. Principles worth keeping
 
 1. Files are the database — no status lives anywhere else.
 2. Forge reads, you (and your AI sessions) write.

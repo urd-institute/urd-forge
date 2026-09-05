@@ -14,6 +14,7 @@ import ImportSpec from './views/ImportSpec.jsx';
 import Update from './views/Update.jsx';
 import Settings from './views/Settings.jsx';
 import Archive from './views/Archive.jsx';
+import Agents from './views/Agents.jsx';
 import { ProgressBar } from './components/bits.jsx';
 import { getSetting, onSettingsChange, schemeFor } from './settings.js';
 
@@ -23,7 +24,8 @@ function parseHash() {
   const parts = pathPart.split('/').filter(Boolean);
   const query = new URLSearchParams(queryPart || '');
   if (parts[0] === 'p' && parts[1]) {
-    return { view: parts[2] || 'overview', slug: decodeURIComponent(parts[1]), query };
+    // `sub` is a view's own second level (e.g. agents/suggestions).
+    return { view: parts[2] || 'overview', sub: parts[3] || null, slug: decodeURIComponent(parts[1]), query };
   }
   if (parts[0] === 'search') return { view: 'search', slug: null, query };
   if (parts[0] === 'help') return { view: 'help', slug: null, query };
@@ -39,6 +41,8 @@ const NAV = [
   { key: 'roadmap', label: 'Roadmap' },
   { key: 'specs', label: 'Specs' },
   { key: 'decisions', label: 'Decisions' },
+  // Agents and their suggestions (SPEC-04); the badge counts open suggestions.
+  { key: 'agents', label: 'Agents' },
   // Opens the terminal panel maximized (SPEC-03 §3.4) — the route is an alias.
   { key: 'terminal', label: 'Terminal' },
 ];
@@ -144,7 +148,7 @@ export default function App() {
   useEffect(
     () =>
       subscribeEvents((msg) => {
-        if (msg.type === 'project-updated' || msg.type === 'projects-changed') {
+        if (msg.type === 'project-updated' || msg.type === 'projects-changed' || msg.type === 'agent-run') {
           setTick((t) => t + 1);
         }
       }),
@@ -209,6 +213,11 @@ export default function App() {
                       className={route.view === n.key ? 'active' : ''}
                     >
                       {n.label}
+                      {n.key === 'agents' && p.openSuggestionCount > 0 && (
+                        <span className="nav-badge mono" title={p.openSuggestionCount + ' open suggestion(s)'}>
+                          {p.openSuggestionCount}
+                        </span>
+                      )}
                     </a>
                   ))}
                 </nav>
@@ -266,8 +275,11 @@ export default function App() {
           <Overview slug={route.slug} tick={tick} onChanged={() => setTick((t) => t + 1)} />
         )}
         {route.slug && route.view === 'roadmap' && <Roadmap slug={route.slug} tick={tick} />}
-        {route.slug && route.view === 'specs' && <Specs key={route.slug} slug={route.slug} tick={tick} />}
+        {route.slug && route.view === 'specs' && <Specs key={route.slug} slug={route.slug} tick={tick} panel={panelRef} />}
         {route.slug && route.view === 'decisions' && <Decisions slug={route.slug} tick={tick} />}
+        {route.slug && route.view === 'agents' && (
+          <Agents key={route.slug} slug={route.slug} sub={route.sub} tick={tick} panel={panelRef} />
+        )}
         {route.slug && route.view === 'import-spec' && <ImportSpec slug={route.slug} />}
         {route.slug && route.view === 'terminal' && (
           <Overview slug={route.slug} tick={tick} onChanged={() => setTick((t) => t + 1)} />

@@ -34,3 +34,12 @@ projectsDir: projects
 #
 # A preset can also type into a running program — e.g. the built-in "/model"
 # button sends the /model slash command to an active Claude Code session.
+
+# Agents (SPEC-04). Standard agents (templates/agents/) are installed into
+# every project that lacks them, with scheduling off. `disabled` keeps named
+# ones from being (re)installed — a list for all projects, or per slug.
+# agents:
+#   maxSuggestionsPerRun: 5
+#   disabled: [dependency-agent]
+#   # disabled:
+#   #   my-project: [security-agent]

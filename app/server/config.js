@@ -27,6 +27,12 @@ export function loadConfig(rootDir) {
     terminal: {
       maxTabs: Math.min(12, Math.max(1, Number(raw.terminal && raw.terminal.maxTabs) || 6)),
     },
+    // Agents (SPEC-04): how many suggestions one run may write, and which
+    // standard agents must not be installed (a list of ids, or slug → list).
+    agents: {
+      maxSuggestionsPerRun: Math.min(20, Math.max(1, Number(raw.agents && raw.agents.maxSuggestionsPerRun) || 5)),
+      disabled: raw.agents && raw.agents.disabled != null ? raw.agents.disabled : [],
+    },
   };
 }
 

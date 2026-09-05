@@ -29,6 +29,23 @@ export async function apiPost(path, body) {
   return data;
 }
 
+/** PATCH JSON to the API (frontmatter edits, SPEC-04); resolves with the parsed response. */
+export async function apiPatch(path, body) {
+  const res = await fetch('/api' + path, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  });
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    /* no body */
+  }
+  if (!res.ok) throw new Error((data && data.error) || res.statusText);
+  return data;
+}
+
 /** Subscribe to live update events; returns an unsubscribe function. */
 export function subscribeEvents(onMessage) {
   let ws;

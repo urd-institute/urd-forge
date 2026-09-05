@@ -88,6 +88,14 @@ export default function Home({ projects }) {
               {p.openSpecCount > 0 && ` · ${p.openSpecCount} open`}
               {p.updatedAt && ` · ${timeAgo(p.updatedAt)}`}
             </div>
+            {p.openSuggestionCount > 0 && (
+              <div className="card-meta mono">
+                {/* Agents' inbox (SPEC-04, Decisions Q7): a count here, the list inside the project. */}
+                <span className="suggestion-count">
+                  {p.openSuggestionCount} open suggestion{p.openSuggestionCount === 1 ? '' : 's'}
+                </span>
+              </div>
+            )}
           </a>
         ))}
         <a className="card new-card" href="#/new">

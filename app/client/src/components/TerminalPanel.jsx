@@ -83,7 +83,7 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
     api('/projects/' + encodeURIComponent(slug) + '/terminals')
       .then((d) => {
         if (!alive) return;
-        const list = (d.tabs || []).map((t) => ({ tabId: t.tabId, title: t.title, locked: false }));
+        const list = (d.tabs || []).map((t) => ({ tabId: t.tabId, title: t.title, locked: Boolean(t.locked) }));
         setMaxTabs(d.maxTabs || 6);
         setTabs((prev) => {
           // Tabs opened locally before the list arrived (autostart) win.
@@ -137,9 +137,9 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
       subscribeEvents((msg) => {
         if (msg.type !== 'terminal-tab' || msg.slug !== stateRef.current.slug) return;
         if (msg.event === 'created') {
-          setTabs((ts) => (ts.some((t) => t.tabId === msg.tabId) ? ts : [...ts, { tabId: msg.tabId, title: msg.title, locked: false }]));
+          setTabs((ts) => (ts.some((t) => t.tabId === msg.tabId) ? ts : [...ts, { tabId: msg.tabId, title: msg.title, locked: Boolean(msg.locked) }]));
         } else if (msg.event === 'title') {
-          setTabs((ts) => ts.map((t) => (t.tabId === msg.tabId && t.title !== msg.title ? { ...t, title: msg.title } : t)));
+          setTabs((ts) => ts.map((t) => (t.tabId === msg.tabId && (t.title !== msg.title || t.locked !== Boolean(msg.locked)) ? { ...t, title: msg.title, locked: Boolean(msg.locked) } : t)));
         } else if (msg.event === 'closed') {
           removeTab(msg.tabId);
         }
@@ -167,7 +167,12 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
 
   // ── Opening tabs ────────────────────────────────────────────────────
   const openTab = useCallback(
-    ({ title, command, viaPreset } = {}) => {
+    // `command` is typed into the fresh shell (`viaPreset`: validated server
+    // side); `message` is sent as-is instead — for agent runs, where the
+    // server builds the command from the agent file (SPEC-04).
+    // `locked`: keep the given title (an agent's name) even when the program
+    // sets a window title.
+    ({ title, command, viaPreset, message, locked } = {}) => {
       const { tabs: cur, maxTabs: limit, mode: m } = stateRef.current;
       if (!stateRef.current.slug) return null;
       if (cur.filter((t) => !t.ended).length >= limit) {
@@ -178,8 +183,9 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
       const tab = {
         tabId,
         title: title || nextDefaultTitle(cur),
-        locked: false,
+        locked: Boolean(locked && title),
         initialCommand: command || null,
+        initialMessage: message || null,
         viaPreset: Boolean(viaPreset),
         generation: 0,
       };
@@ -345,15 +351,16 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
   }
 
   function restartTab(tab) {
-    patchTab(tab.tabId, { ended: false, exitCode: null, initialCommand: null, generation: (tab.generation || 0) + 1 });
+    patchTab(tab.tabId, { ended: false, exitCode: null, initialCommand: null, initialMessage: null, generation: (tab.generation || 0) + 1 });
   }
 
   function setTitle(tab, title, lock) {
     const t = String(title || '').trim().slice(0, 40);
     if (!t) return;
-    patchTab(tab.tabId, { title: t, locked: lock ? true : tab.locked });
+    const locked = lock ? true : tab.locked;
+    patchTab(tab.tabId, { title: t, locked });
     const r = tabRefs.current.get(tab.tabId);
-    if (r) r.setTitle(t);
+    if (r) r.setTitle(t, locked);
   }
 
   function commitRename() {
@@ -391,11 +398,13 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
         title={t.title}
         active={isActive}
         initialCommand={t.initialCommand}
+        initialMessage={t.initialMessage}
         viaPreset={t.viaPreset}
         generation={t.generation || 0}
         onReady={() => {
-          if (t.initialCommand) patchTab(t.tabId, { initialCommand: null });
+          if (t.initialCommand || t.initialMessage) patchTab(t.tabId, { initialCommand: null, initialMessage: null });
         }}
+        onNotice={(message) => setNotice(message)}
         onExit={(exitCode, closed) => {
           if (closed) removeTab(t.tabId);
           else patchTab(t.tabId, { ended: true, exitCode, unread: !isActive || mode === 'closed' });
