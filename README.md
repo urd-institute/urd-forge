@@ -6,8 +6,9 @@ Spec-driven conventions already exist — Spec Kit, Kiro, OpenSpec. What's
 missing is the layer that makes the generated files navigable, visual and
 searchable. Forge is that layer: **the reader, not another standard.** It
 reads your project files, renders roadmap progress, a spec board, a decision
-log and a concept timeline — and gives every project a command window for
-Claude Code. The files are the database; Forge never writes to them.
+log and a concept timeline — and gives every project a terminal panel for
+Claude Code plus agents that watch the project and file suggestions. The
+files are the database; Forge reads them and never edits the ones you wrote.
 
 Developed by [URD Institute](https://urdinstitute.org).
 
@@ -54,6 +55,8 @@ projects/<slug>/
 ├── DOCS.md          # living docs; "### ADR-…" headings → decision log
 ├── DESIGN.md        # optional: design tokens and components
 ├── specs/           # SPEC-xx-<slug>.md with YAML frontmatter → spec board
+├── agents/          # agent definitions (*.md); standard agents installed by Forge
+│   └── suggestions/ # S-NNN-<slug>.md written by agent runs → Agents screen
 └── .forge/          # Forge's generated cache — never hand-edited
 ```
 
@@ -71,19 +74,35 @@ topics: [auth, ui]      # optional: filter chips on the spec board
 ```
 
 Copy `templates/CLAUDE.md` into new projects so AI sessions maintain the
-structure automatically, and `templates/commands/forge.md` into
-`.claude/commands/` to get the `/forge <description>` command, which drafts a
-new spec in a running Claude Code session (projects created from the UI get
-both). Parsing is tolerant: files that deviate are shown as
-"could not be parsed" instead of breaking the UI.
+structure automatically (projects scaffolded from the UI get it). Forge
+itself installs the `/forge` Claude Code command (`.claude/commands/forge.md`)
+and the standard agents (`agents/*.md`) into every project that lacks them,
+and never overwrites your edits. In a running Claude Code session:
+
+- `/forge <description>` drafts a new spec in `specs/` and adds a roadmap step
+- `/forge q SPEC-XX` walks through a spec's open questions one at a time,
+  recording each answer in its Decisions section
+- `/forge agent <description>` drafts a new agent; `/forge agent from SPEC-XX`
+  drafts one that guards that spec
+
+Every question the command asks comes with numbered suggested answers.
+Parsing is tolerant: files that deviate are shown as "could not be parsed"
+instead of breaking the UI.
 
 ## Screens
 
-1. **Project list** — all projects with overall progress
+1. **Project list** — all projects with overall progress and open-suggestion
+   counts, plus a **dev servers** panel: every `http://localhost:…` URL
+   printed in a terminal tab (or declared in the config) is probed and
+   listed with its project and an up/down state
 2. **Project overview** — README, progress, recent activity, open specs;
-   pin the project to the top of the list, export it as a zip, or archive it
+   pin the project to the top of the list, give it its own color scheme,
+   export it as a zip, or archive it
 3. **Roadmap** — phases with progress bars; every step links to its source file
-4. **Spec board** — specs by status with dependencies; click for rendered markdown
+4. **Spec board** — specs by status with dependencies; click for rendered
+   markdown. A filter field and topic chips narrow the board (kept in the
+   URL); **Import spec** files a spec drafted elsewhere under the next free
+   number and can hand it to Claude Code to integrate into the roadmap
 5. **Search** — free text across all files in all projects
 6. **Terminal panel** — docked at the bottom of every screen, with several
    tabs per project (Claude Code in one, a dev server in another), each a
@@ -97,14 +116,24 @@ both). Parsing is tolerant: files that deviate are shown as
 9. **New project** — scaffold a project from a description (Claude Code drafts
    the documents), or import a project zip exported from another Forge
    installation
+10. **Archive** — archived projects stay on disk and in search but leave the
+    sidebar; restore them here
+11. **Settings** — light/dark/system theme, seven color schemes (each with a
+    light and dark variant) and the terminal font size, stored per browser
+12. **Updates** — checks github.com/urd-institute/urd-forge for new versions
+    and installs one only when it applies cleanly (fast-forward; local
+    commits or changed files block it); restart or stop Forge from here
 
 ## Configuration
 
-Copy `forge.config.example.yaml` to `forge.config.yaml` to configure port,
-projects directory and terminal presets (grouped by topic, per project).
-Everything has defaults; without the file Forge runs on port 4400 with a
-built-in preset set. Your local `forge.config.yaml` is gitignored, so updates
-never touch it.
+Copy `forge.config.example.yaml` to `forge.config.yaml` to configure the
+port, the projects directory, terminal presets (grouped by topic, per
+project), dev servers started outside Forge's terminals (`servers:`), agent
+limits and which standard agents to leave out (`agents:`), and `updates:
+false` to disable self-update for a development copy. Everything has
+defaults; without the file Forge runs on port 4400 with a built-in preset
+set. Pins and archived projects are remembered per installation in
+`forge.state.json`. Both files are gitignored, so updates never touch them.
 
 ## Security
 
@@ -112,7 +141,8 @@ Localhost binding only. No command execution via the HTTP API — the terminal
 runs over a dedicated WebSocket, and preset commands are validated against the
 server-side configuration. Agent runs are built server-side from the agent
 files (the browser only names an agent), and headless runs get Claude Code
-permission rules that allow writes under `agents/suggestions/` only. Sessions die with the app. A hosted edition needs
+permission rules that allow writes under `agents/suggestions/` only. Sessions
+die with the app. Self-update is fast-forward only. A hosted edition needs
 its own security spec (v2).
 
 ## License
