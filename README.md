@@ -18,7 +18,8 @@ Developed by [URD Institute](https://urdinstitute.org).
 <summary>More screenshots</summary>
 
 ![Project list](docs/screenshots/home.jpg)
-![Command window](docs/screenshots/terminal.jpg)
+![Terminal panel](docs/screenshots/terminal.jpg)
+![Agents and suggestions](docs/screenshots/agents.jpg)
 
 </details>
 
