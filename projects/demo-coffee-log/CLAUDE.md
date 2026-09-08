@@ -1,4 +1,4 @@
-# CLAUDE.md — AI development instructions (Kaffelog)
+# CLAUDE.md — AI development instructions (Coffee Log)
 
 You are working in a URD Forge project. Keep the file structure intact and
 up to date at all times.

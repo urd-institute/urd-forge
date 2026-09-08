@@ -41,7 +41,7 @@ pulls over uncommitted changes.
 3. Bump `version` in `package.json` (semver: patch for fixes, minor for
    features) — the Updates screen shows it to users.
 4. Write commit messages in English, in the imperative ("Add …", "Fix …").
-5. Test against the demo project (`projects/demo-kaffelog`) and make sure
+5. Test against the demo project (`projects/demo-coffee-log`) and make sure
    `npm run build` succeeds.
 
 By contributing you agree that your contribution is licensed under the

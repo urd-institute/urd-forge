@@ -108,7 +108,8 @@ instead of breaking the UI.
 6. **Terminal panel** — docked at the bottom of every screen, with several
    tabs per project (Claude Code in one, a dev server in another), each a
    shell started in the project folder (xterm.js + node-pty); preset menus
-   via `forge.config.yaml`
+   via `forge.config.yaml`. Claude Code runs full-screen inside a tab and
+   survives resizing (on Windows Forge bundles a current ConPTY)
 7. **Decision log** — the ADR list from DOCS.md, newest first
 8. **Agents** — file-defined agents (`agents/*.md`; Security, Docs and Spec
    Drift ship as standard) run manually or on a schedule as Claude Code

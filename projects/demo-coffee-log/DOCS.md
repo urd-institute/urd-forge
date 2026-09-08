@@ -1,4 +1,4 @@
-# Kaffelog — living documentation
+# Coffee Log — living documentation
 
 ## Architecture in one paragraph
 

@@ -152,11 +152,20 @@ const TerminalTab = forwardRef(function TerminalTab(
     let sent = { cols: term.cols, rows: term.rows };
     let retries = 0;
     let retryFrame = 0;
+    let syncTimer = 0;
     const visible = () => holder.current && holder.current.clientHeight > 0;
+    // The pty learns the new size once the size has settled — one resize per
+    // drag, not one per pointer move. Every pty resize makes ConPTY repaint
+    // the whole viewport, and on Windows 10's built-in ConPTY each repaint
+    // can overwrite scrollback lines and the running program's own screen
+    // (measured in ADR-025), so fewer resizes means less damage.
     const syncSize = () => {
-      if (ws.readyState !== 1 || (term.cols === sent.cols && term.rows === sent.rows)) return;
-      sent = { cols: term.cols, rows: term.rows };
-      ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => {
+        if (ws.readyState !== 1 || (term.cols === sent.cols && term.rows === sent.rows)) return;
+        sent = { cols: term.cols, rows: term.rows };
+        ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+      }, 150);
     };
     const misfits = () => {
       const el = holder.current;
@@ -193,6 +202,7 @@ const TerminalTab = forwardRef(function TerminalTab(
       fitRef.current = null;
       termRef.current = null;
       clearInterval(guard);
+      clearTimeout(syncTimer);
       cancelAnimationFrame(retryFrame);
       window.removeEventListener('resize', fitNow);
       document.removeEventListener('visibilitychange', fitNow);

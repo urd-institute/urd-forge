@@ -14,22 +14,35 @@ import path from 'node:path';
 
 let ptyLib = null;
 let ptyError = null;
+// True when the upstream node-pty is in use on Windows: it ships its own,
+// current ConPTY (conpty.dll + OpenConsole.exe from the Windows Terminal
+// project), which we prefer over the one built into Windows 10 — the built-in
+// one repaints the whole screen on every resize and loses scrollback lines
+// and the running program's UI while doing so (measured in ADR-025; the same
+// reason VS Code loads the bundled one).
+let bundledConpty = false;
 
 export async function loadPty() {
-  try {
-    ptyLib = await import('@lydell/node-pty');
-  } catch (err1) {
+  // Windows: upstream node-pty first, for its bundled ConPTY. Elsewhere the
+  // @lydell fork first — it has prebuilt binaries for Linux, upstream has not.
+  const order = process.platform === 'win32' ? ['node-pty', '@lydell/node-pty'] : ['@lydell/node-pty', 'node-pty'];
+  const errors = [];
+  for (const name of order) {
     try {
-      ptyLib = await import('node-pty');
-    } catch (err2) {
-      ptyError = err1.message;
+      ptyLib = await import(name);
+      // FORGE_CONPTY=inbox forces the ConPTY built into Windows (diagnostics).
+      bundledConpty = process.platform === 'win32' && name === 'node-pty' && process.env.FORGE_CONPTY !== 'inbox';
+      break;
+    } catch (err) {
+      errors.push(err.message);
     }
   }
+  if (!ptyLib) ptyError = errors[0];
   return ptyLib != null;
 }
 
 export function terminalAvailable() {
-  return { available: ptyLib != null, error: ptyLib ? null : ptyError };
+  return { available: ptyLib != null, error: ptyLib ? null : ptyError, bundledConpty };
 }
 
 // Replayed to a client that (re)attaches. Sized to match the client's
@@ -89,6 +102,7 @@ function getSession(slug, tabId, cwd, cols, rows, title) {
     rows: rows || 30,
     cwd,
     env: { ...process.env, FORGE_PROJECT: slug },
+    useConptyDll: bundledConpty,
   });
   const session = {
     pty: proc,

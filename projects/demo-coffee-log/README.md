@@ -1,4 +1,4 @@
-# Kaffelog (demo project)
+# Coffee Log (demo project)
 
 A tiny app for logging and rating your coffee brews — and the **demo project for
 URD Forge**. It exists so you can see what a spec-driven project looks like in the
@@ -11,7 +11,7 @@ most of the time — and what Forge is built to make visible.
 
 ## What to look at
 
-- **CONCEPT.md** — what Kaffelog is and why (with a changelog Forge renders as a timeline)
+- **CONCEPT.md** — what Coffee Log is and why (with a changelog Forge renders as a timeline)
 - **ROADMAP.md** — phases and steps; checkboxes drive the progress bars
 - **specs/** — five specs in different states (`done`, `in-progress`, `draft`) with dependencies
 - **DOCS.md** — the ADR log: decisions made along the way, and why

@@ -19,7 +19,7 @@ const THEMES = [
 ];
 
 export default function Settings() {
-  const [theme, setTheme] = useState(() => getSetting('theme', 'system'));
+  const [theme, setTheme] = useState(() => getSetting('theme', 'dark'));
   const [fontSize, setFontSize] = useState(termFontSize);
   const [scheme, setScheme] = useState(globalScheme);
 

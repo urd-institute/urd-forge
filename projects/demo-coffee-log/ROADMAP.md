@@ -1,4 +1,4 @@
-# Kaffelog — roadmap
+# Coffee Log — roadmap
 
 ## Phase 1 — Foundation
 - [x] Project scaffold (Vite + React)

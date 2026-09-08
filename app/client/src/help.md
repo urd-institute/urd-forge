@@ -6,7 +6,7 @@ every project a command window for Claude Code. Forge never writes to your
 files: **the files are the database**, and you edit them in your editor or
 through an AI session.
 
-> New here? Open the **demo-kaffelog** project in the sidebar and click around —
+> New here? Open the **demo-coffee-log** project in the sidebar and click around —
 > it is a complete example of everything described below.
 
 ## 1. Create a project
@@ -104,8 +104,8 @@ instead of breaking anything. Fix the format and it reappears.
 - **Terminal** — the command window (next section).
 - **Search** (sidebar) — free text across every file in every project.
   Results link straight to the file.
-- **Settings** (sidebar, the ⚙ gear) — color theme (light / dark / follow
-  system), the **color scheme** (seven palettes, each with a light and a
+- **Settings** (sidebar, the ⚙ gear) — color theme (dark by default; light,
+  or follow the system), the **color scheme** (seven palettes, each with a light and a
   dark variant) and the terminal font size. Preferences are stored in the
   browser, so each browser keeps its own.
 
@@ -213,6 +213,22 @@ spec-driven from there.
 - Claude Code requires a global install (`npm install -g
   @anthropic-ai/claude-code`) and an Anthropic subscription or API key.
   Without it the terminal is still a normal shell.
+
+### Scrolling, and Claude Code's full-screen view
+
+A plain shell keeps 10,000 lines of scrollback: scroll with the wheel or
+the scrollbar, and resizing the panel keeps every line. **Claude Code takes
+over the whole terminal** while it runs — like in Windows Terminal or iTerm —
+and scrolls its own transcript: the mouse wheel scrolls inside Claude Code,
+and the shell output from before it started comes back when it exits. Its
+boxes (diffs, permission prompts, the status line) redraw correctly when you
+resize or maximize the panel.
+
+On Windows this relies on the modern ConPTY that Forge bundles (via
+node-pty). The one built into Windows 10 hides the terminal's capabilities
+from Claude Code and repaints the screen on every resize, losing scrollback
+lines and garbling Claude Code's boxes — the startup line `terminal: ready
+(bundled ConPTY)` confirms the bundled one is in use.
 
 ### Dev servers
 
@@ -382,6 +398,12 @@ Everything has defaults; the file may be empty.
 - **"Could not be parsed"** — the file deviates from the format above. The
   most common causes: a spec without frontmatter, or a roadmap without
   checkboxes. Fix the file; Forge re-reads it on save.
+- **Output disappears from the terminal after resizing, or Claude Code's
+  boxes look torn** (Windows) — the startup line says `terminal: ready`
+  without `(bundled ConPTY)`: the `node-pty` package did not install and
+  Forge fell back to the ConPTY built into Windows. Run `npm install` again
+  and check for errors. `FORGE_CONPTY=inbox` in the environment forces the
+  built-in one, for comparison.
 - **Terminal shows "unavailable"** — node-pty (a native module) did not
   install. Forge still works fully as an overview. On Windows, install
   Git for Windows; on a bare machine, Visual Studio Build Tools or Xcode

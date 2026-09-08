@@ -1,8 +1,8 @@
-# Kaffelog — concept
+# Coffee Log — concept
 
-Kaffelog is a single-page app for people who brew coffee at home and want to get
+Coffee Log is a single-page app for people who brew coffee at home and want to get
 better at it. You log each brew (method, beans, grind, water, time), rate the
-result, and Kaffelog shows you what actually makes your coffee better.
+result, and Coffee Log shows you what actually makes your coffee better.
 
 **Who it is for:** home brewers with a scale and opinions.
 **What it is not:** a social network, a shop, or a bean database.

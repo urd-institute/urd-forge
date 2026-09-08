@@ -69,7 +69,7 @@ function useApplyTheme(slug) {
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
-      const setting = getSetting('theme', 'system');
+      const setting = getSetting('theme', 'dark');
       const dark = setting === 'dark' || (setting === 'system' && mq.matches);
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
       document.documentElement.dataset.scheme = schemeFor(slug);

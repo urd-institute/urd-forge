@@ -42,6 +42,35 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..',
 const config = loadConfig(rootDir);
 // Single source of truth for the version shown in the UI and the Updates screen.
 const VERSION = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')).version;
+// v1.3 renamed the demo project (demo-kaffelog → demo-coffee-log). An update
+// moves the tracked files, but Forge-generated content (agents/, .claude/,
+// .forge/) stays behind in the old folder, which would then linger as a
+// ghost project. Carry the generated content over and drop the old folder —
+// only when it really is the leftover (no README) and the new one exists.
+function migrateRenamedDemo(projectsDir) {
+  const oldDir = path.join(projectsDir, 'demo-kaffelog');
+  const newDir = path.join(projectsDir, 'demo-coffee-log');
+  if (!fs.existsSync(oldDir) || fs.existsSync(path.join(oldDir, 'README.md')) || !fs.existsSync(newDir)) return;
+  for (const sub of ['agents', '.claude']) {
+    const from = path.join(oldDir, sub);
+    const to = path.join(newDir, sub);
+    if (fs.existsSync(from) && !fs.existsSync(to)) {
+      try {
+        fs.cpSync(from, to, { recursive: true });
+      } catch (err) {
+        console.warn('[forge] Could not carry over ' + sub + ' from demo-kaffelog:', err.message);
+      }
+    }
+  }
+  try {
+    fs.rmSync(oldDir, { recursive: true, force: true });
+    console.log('[forge] Removed the leftover projects/demo-kaffelog folder (the demo is now demo-coffee-log).');
+  } catch (err) {
+    console.warn('[forge] Could not remove projects/demo-kaffelog:', err.message);
+  }
+}
+migrateRenamedDemo(config.projectsDir);
+
 const store = new Store(config);
 store.scanAll();
 for (const p of store.projects.values()) store.writeCache(p);
@@ -494,7 +523,7 @@ server.listen(config.port, '127.0.0.1', () => {
   console.log('');
   console.log('  URD FORGE  ·  http://localhost:' + config.port);
   console.log('  projects:  ' + store.projects.size + '  (' + config.projectsDir + ')');
-  console.log('  terminal:  ' + (term.available ? 'ready' : 'unavailable — ' + (term.error || 'node-pty missing')));
+  console.log('  terminal:  ' + (term.available ? 'ready' + (term.bundledConpty ? ' (bundled ConPTY)' : '') : 'unavailable — ' + (term.error || 'node-pty missing')));
   console.log('  started in ' + (Date.now() - started) + ' ms');
   console.log('');
 });
