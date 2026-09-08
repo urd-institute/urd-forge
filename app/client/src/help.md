@@ -167,10 +167,12 @@ spec-driven from there.
 - **Open and close**: click the *▲ Terminal* bar at the bottom, or press
   **Ctrl+J** (Ctrl+` also works). Closing the panel never stops anything —
   the sessions keep running, and the bar shows their names and a dot when
-  new output arrived. **Drag the top edge** to resize; **⤢** maximizes the
-  panel over the whole content area (that is also what **Terminal** in the
-  project menu does), **⤡** restores it. Size and state are remembered in
-  this browser.
+  new output arrived. The panel opens at **half the window height** by
+  default, so the screen behind it stays readable (**Terminal** in the
+  project menu opens it the same way). **Drag the top edge** to resize;
+  **⤢** maximizes the panel over the whole content area, **⤡** restores it.
+  Size and open/closed state are remembered in this browser; a maximized
+  panel comes back at its normal height after a reload.
 - **Tabs**: a project can have several sessions at once — Claude Code in one
   tab, `npm run dev` in another. **+** opens a new tab with an empty shell
   at once; the **▾** next to it opens a new tab that starts with a preset.

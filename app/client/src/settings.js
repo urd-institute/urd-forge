@@ -35,16 +35,22 @@ export function termFontSize() {
 export const PANEL_MIN_HEIGHT = 120;
 export const PANEL_MAX_FRACTION = 0.85;
 
-/** 'closed' | 'open' | 'max' — closed until the user first opens it. */
+/** Default panel height as a fraction of the window: half, so the page
+ * behind stays readable. */
+export const PANEL_DEFAULT_FRACTION = 0.5;
+
+/** 'closed' | 'open' — closed until the user first opens it. A maximized
+ * panel is remembered as 'open': maximizing is a one-off, never the default
+ * a page loads with. */
 export function panelMode() {
   const v = getSetting('panel', 'closed');
-  return v === 'open' || v === 'max' ? v : 'closed';
+  return v === 'open' || v === 'max' ? 'open' : 'closed';
 }
 
 /** Panel height in px, clamped to what fits in the current window. */
 export function panelHeight() {
   const n = Number(getSetting('panel-height', 0));
-  const fallback = Math.round(window.innerHeight * 0.4);
+  const fallback = Math.round(window.innerHeight * PANEL_DEFAULT_FRACTION);
   return clampPanelHeight(Number.isFinite(n) && n > 0 ? n : fallback);
 }
 

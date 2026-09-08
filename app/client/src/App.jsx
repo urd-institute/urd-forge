@@ -43,7 +43,8 @@ const NAV = [
   { key: 'decisions', label: 'Decisions' },
   // Agents and their suggestions (SPEC-04); the badge counts open suggestions.
   { key: 'agents', label: 'Agents' },
-  // Opens the terminal panel maximized (SPEC-03 §3.4) — the route is an alias.
+  // Opens the terminal panel at its remembered height (default: half the
+  // window, so the screen behind stays readable) — the route is an alias.
   { key: 'terminal', label: 'Terminal' },
 ];
 
@@ -103,7 +104,8 @@ export default function App() {
     if (route.slug) setLastSlug(route.slug);
   }, [route.slug]);
 
-  // `#/p/<slug>/terminal` is an alias for "open the panel maximized"; an
+  // `#/p/<slug>/terminal` is an alias for "open the panel" (at its normal
+  // height, never maximized — the page behind should stay visible); an
   // `autostart` query runs its command in a new tab, `?tab=<id>` on any
   // project route activates that tab (dev-server list). The query is
   // stripped afterwards so a reload never runs the command twice.
@@ -113,7 +115,7 @@ export default function App() {
     if (route.view === 'terminal') {
       const cmd = autostartCommand(route.query.get('autostart'), route.query.get('file'));
       if (cmd) panelRef.current.openTab({ title: 'Claude Code', command: cmd, viaPreset: false });
-      panelRef.current.show('max');
+      panelRef.current.show('open');
       location.replace('#/p/' + encodeURIComponent(route.slug));
     } else if (tab) {
       panelRef.current.activate(tab);
