@@ -524,6 +524,10 @@ server.listen(config.port, '127.0.0.1', () => {
   console.log('  URD FORGE  ·  http://localhost:' + config.port);
   console.log('  projects:  ' + store.projects.size + '  (' + config.projectsDir + ')');
   console.log('  terminal:  ' + (term.available ? 'ready' + (term.bundledConpty ? ' (bundled ConPTY)' : '') : 'unavailable — ' + (term.error || 'node-pty missing')));
+  const claude = term.claude;
+  if (claude.found) console.log('  claude:    ' + claude.path);
+  else if (claude.installedElsewhere) console.log('  claude:    installed at ' + claude.installedElsewhere + ' but not on this PATH — stop Forge (Ctrl+C) and start it again');
+  else console.log('  claude:    not found — npm install -g @anthropic-ai/claude-code, then stop Forge (Ctrl+C) and start it again');
   console.log('  started in ' + (Date.now() - started) + ' ms');
   console.log('');
 });

@@ -48,6 +48,11 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
   const [presets, setPresets] = useState([]);
   const [available, setAvailable] = useState(true);
   const [notice, setNotice] = useState(null);
+  // { found, path, installedElsewhere } from the server — Claude Code is a
+  // separate global install, and "claude is not recognized" is the first
+  // thing a new user hits without it. Dismissable for the page's lifetime.
+  const [claude, setClaude] = useState(null);
+  const [claudeDismissed, setClaudeDismissed] = useState(false);
   const [openMenu, setOpenMenu] = useState(null);
   const [confirmStop, setConfirmStop] = useState(false);
   const [confirmClose, setConfirmClose] = useState(null);
@@ -109,6 +114,7 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
           setAvailable(false);
           setNotice('Terminal is unavailable: node-pty could not be loaded (' + (d.terminal.error || 'unknown error') + ').');
         }
+        setClaude(d.terminal && d.terminal.claude ? d.terminal.claude : null);
       })
       .catch(() => {});
     return () => {
@@ -623,6 +629,29 @@ const TerminalPanel = forwardRef(function TerminalPanel({ slug, badge }, ref) {
             Install /forge
           </button>
           {forgeError && <span className="error-text small">{forgeError}</span>}
+        </div>
+      )}
+      {shown && available && claude && !claude.found && !claudeDismissed && (
+        <div className="panel-note">
+          <span>
+            {claude.installedElsewhere ? (
+              <>
+                Claude Code is installed (<code>{claude.installedElsewhere}</code>) but was not on the PATH when Forge
+                started, so <code>claude</code> will not be recognised here. Stop Forge with Ctrl+C in the window
+                running <code>npm run forge</code> and start it again.
+              </>
+            ) : (
+              <>
+                Claude Code is not installed, so <code>claude</code> and the presets will not work — the terminal is
+                still a normal shell. Install it in a separate window with{' '}
+                <code>npm install -g @anthropic-ai/claude-code</code>, then stop Forge with Ctrl+C in the window
+                running <code>npm run forge</code> and start it again.
+              </>
+            )}
+          </span>
+          <button className="panel-icon" onClick={() => setClaudeDismissed(true)} title="Dismiss until the page is reloaded">
+            ×
+          </button>
         </div>
       )}
       {shown && notice && (

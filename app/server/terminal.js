@@ -9,6 +9,7 @@
  * install, Forge still runs as an overview and the terminal reports itself
  * unavailable (SPEC-00 §8a).
  */
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -41,8 +42,50 @@ export async function loadPty() {
   return ptyLib != null;
 }
 
+// Claude Code is a separate global install; the terminal is a plain shell
+// without it. New users hit "claude is not recognized" and cannot tell
+// whether it is missing or merely not on Forge's PATH, so look it up once —
+// the shells Forge spawns inherit Forge's own environment, which is fixed for
+// the life of the process, so the answer cannot change until Forge is
+// stopped and started again (the UI restart keeps the supervisor's env).
+let claudeStatus = null;
+export function detectClaude() {
+  if (claudeStatus) return claudeStatus;
+  const win = process.platform === 'win32';
+  const dirs = (process.env.PATH || process.env.Path || '').split(path.delimiter).filter(Boolean);
+  const exts = win ? (process.env.PATHEXT || '.COM;.EXE;.BAT;.CMD').split(';').map((e) => e.toLowerCase()) : [''];
+  let found = null;
+  for (const dir of dirs) {
+    for (const ext of exts) {
+      const candidate = path.join(dir, 'claude' + ext);
+      try {
+        fs.accessSync(candidate, fs.constants.X_OK);
+        found = candidate;
+        break;
+      } catch {
+        /* keep looking */
+      }
+    }
+    if (found) break;
+  }
+  // Common install locations that are NOT on this process's PATH: the user
+  // installed Claude Code after starting Forge (npm's global bin or the
+  // native installer's ~/.local/bin). Report it so the hint can say
+  // "restart Forge" instead of "install".
+  let installedElsewhere = null;
+  if (!found) {
+    const home = os.homedir();
+    const spots = win
+      ? [path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'npm', 'claude.cmd'), path.join(home, '.local', 'bin', 'claude.exe')]
+      : [path.join(home, '.local', 'bin', 'claude'), '/usr/local/bin/claude', '/opt/homebrew/bin/claude', path.join(home, '.npm-global', 'bin', 'claude')];
+    installedElsewhere = spots.find((p) => fs.existsSync(p)) || null;
+  }
+  claudeStatus = { found: found != null, path: found, installedElsewhere };
+  return claudeStatus;
+}
+
 export function terminalAvailable() {
-  return { available: ptyLib != null, error: ptyLib ? null : ptyError, bundledConpty };
+  return { available: ptyLib != null, error: ptyLib ? null : ptyError, bundledConpty, claude: detectClaude() };
 }
 
 // Replayed to a client that (re)attaches. Sized to match the client's

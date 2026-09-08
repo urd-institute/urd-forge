@@ -214,7 +214,12 @@ spec-driven from there.
   is replayed at the new size.
 - Claude Code requires a global install (`npm install -g
   @anthropic-ai/claude-code`) and an Anthropic subscription or API key.
-  Without it the terminal is still a normal shell.
+  Without it the terminal is still a normal shell. Forge checks for the
+  `claude` command when it starts: the startup line in the console shows
+  where it was found, and the terminal panel shows a note with the install
+  command when it is missing. Install it in a separate window, then **stop
+  Forge with Ctrl+C and start it again** — the terminal inherits the PATH
+  Forge was started with, and the Restart button in the UI keeps the old one.
 
 ### Scrolling, and Claude Code's full-screen view
 
