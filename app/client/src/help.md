@@ -267,6 +267,24 @@ go, removes the answered question, and at the end offers to set the status
 to `approved` if nothing is left open. Say *skip* to leave a question open,
 *stop* to finish early.
 
+**Draft an agent:**
+
+```
+/forge agent <what it should look for>
+/forge agent from SPEC-03
+```
+
+writes a new agent file in `agents/` (see §6). With a description, Claude
+drafts an agent that looks for that one kind of thing and asks two short
+questions first if the description is empty: what to look for, and what to
+do when a suggestion is approved. With `from SPEC-XX`, the agent's job is to
+guard that spec — it checks the spec's Definition of Done and Decisions
+against the code and suggests where they have drifted (the **+ agent**
+button on a spec card runs this form for you). The file gets an id ending in
+`-agent`, `schedule: off` and `enabled: true`, so nothing runs until you
+switch the schedule on or press **Run now** on the Agents screen. An
+existing agent file is never overwritten without asking.
+
 The command is an ordinary markdown file you may edit to taste — your edits
 are kept. (`_template` is the one folder Forge leaves without it.) If the file
 could not be created, the terminal panel shows an **Install /forge** note.
