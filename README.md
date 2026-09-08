@@ -42,6 +42,32 @@ npm run forge
 
 Open **http://localhost:4400**. Forge binds to localhost only.
 
+Prefer `git clone` over GitHub's "Download ZIP": the built-in Updates
+screen installs new releases with `git pull`, so a ZIP copy cannot update
+itself.
+
+### Troubleshooting the first start
+
+**`Cannot find native binding` (or `Cannot find module '@rolldown/binding-…'`)
+during "Building client…".** npm occasionally skips the platform-specific
+package that the bundler needs (a known npm bug, npm/cli#4828). Nothing is
+wrong with your download — reinstall the dependencies from scratch:
+
+```bash
+npm install -g npm@latest
+rm -rf node_modules package-lock.json   # PowerShell: Remove-Item -Recurse -Force node_modules, package-lock.json
+npm install
+npm run forge
+```
+
+This also happens when Node.js is a 32-bit build: the bundler only ships
+x64 and arm64 binaries. `node -p process.arch` should print `x64` or
+`arm64`; if not, install 64-bit Node.js from [nodejs.org](https://nodejs.org).
+
+**`URD Forge requires Node.js 20.19 or newer`** during `npm install`:
+install the current LTS from [nodejs.org](https://nodejs.org) and run
+`npm install` again.
+
 ## Your projects
 
 Every folder under `projects/` is a project. Forge understands the

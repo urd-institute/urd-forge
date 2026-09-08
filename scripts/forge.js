@@ -23,10 +23,49 @@ const buildOnly = args.includes('--build-only');
 const rebuild = args.includes('--rebuild');
 const dev = args.includes('--dev');
 
+// The client is built by Vite, which relies on a platform-specific native
+// package (@rolldown/binding-<platform>). npm sometimes skips those optional
+// packages (npm/cli#4828), and the resulting error is a raw stack trace from
+// deep inside the bundler. Translate it into instructions a new user can act on.
+function isMissingNativeBinding(err) {
+  const text = String(err && err.message ? err.message : err);
+  return /Cannot find native binding/i.test(text)
+    || /Cannot find module ['"]?@rolldown\/binding/i.test(text)
+    || /Cannot find module ['"]?rolldown-binding/i.test(text);
+}
+
+function explainMissingNativeBinding(err) {
+  console.error('');
+  console.error('  URD Forge could not build the client: the bundler’s native package');
+  console.error('  for ' + process.platform + '-' + process.arch + ' is missing from node_modules.');
+  console.error('');
+  console.error('  This is a known npm bug with optional dependencies (npm/cli#4828),');
+  console.error('  not a problem with your Forge download. Fix it by reinstalling:');
+  console.error('');
+  console.error('      npm install -g npm@latest');
+  console.error('      rm -rf node_modules package-lock.json     (PowerShell: Remove-Item -Recurse -Force node_modules, package-lock.json)');
+  console.error('      npm install');
+  console.error('      npm run forge');
+  console.error('');
+  if (process.arch !== 'x64' && process.arch !== 'arm64') {
+    console.error('  Note: you are running a ' + process.arch + ' build of Node.js. The bundler only');
+    console.error('  ships x64 and arm64 binaries — install 64-bit Node.js from https://nodejs.org');
+    console.error('');
+  }
+  console.error('  Original error: ' + (err && err.message ? err.message.split('\n')[0] : err));
+  console.error('');
+}
+
 async function buildClient() {
   console.log('[forge] Building client…');
-  const { build } = await import('vite');
-  await build({ root: clientDir, logLevel: 'info' });
+  try {
+    const { build } = await import('vite');
+    await build({ root: clientDir, logLevel: 'info' });
+  } catch (err) {
+    if (!isMissingNativeBinding(err)) throw err;
+    explainMissingNativeBinding(err);
+    process.exit(1);
+  }
 }
 
 function runServerOnce() {
