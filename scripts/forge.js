@@ -40,9 +40,12 @@ function explainMissingNativeBinding(err) {
   console.error('  for ' + process.platform + '-' + process.arch + ' is missing from node_modules.');
   console.error('');
   console.error('  This is a known npm bug with optional dependencies (npm/cli#4828),');
-  console.error('  not a problem with your Forge download. Fix it by reinstalling:');
+  console.error('  not a problem with your Forge download. It usually means an old Node.js');
+  console.error('  (you have ' + process.versions.node + '; Forge needs 20.19+ or 22.12+). Fix:');
   console.error('');
-  console.error('      npm install -g npm@latest');
+  console.error('   1. Install the current LTS from https://nodejs.org (it includes a fixed npm).');
+  console.error('   2. Reinstall the dependencies from scratch:');
+  console.error('');
   console.error('      rm -rf node_modules package-lock.json     (PowerShell: Remove-Item -Recurse -Force node_modules, package-lock.json)');
   console.error('      npm install');
   console.error('      npm run forge');

@@ -49,12 +49,18 @@ itself.
 ### Troubleshooting the first start
 
 **`Cannot find native binding` (or `Cannot find module '@rolldown/binding-…'`)
-during "Building client…".** npm occasionally skips the platform-specific
-package that the bundler needs (a known npm bug, npm/cli#4828). Nothing is
-wrong with your download — reinstall the dependencies from scratch:
+during "Building client…".** npm skipped the platform-specific package that
+the bundler needs (a known npm bug, npm/cli#4828). Nothing is wrong with
+your download. It almost always means an old Node.js with an old bundled
+npm — for example Node 22.2 ships npm 10.8, which has this bug.
+
+1. Install the current LTS from [nodejs.org](https://nodejs.org). Forge
+   needs Node 20.19+ or 22.12+; `node -v` shows what you have. (Do not run
+   `npm install -g npm@latest` on an old Node — the latest npm refuses to
+   install there.)
+2. Reinstall the dependencies from scratch:
 
 ```bash
-npm install -g npm@latest
 rm -rf node_modules package-lock.json   # PowerShell: Remove-Item -Recurse -Force node_modules, package-lock.json
 npm install
 npm run forge
@@ -62,11 +68,12 @@ npm run forge
 
 This also happens when Node.js is a 32-bit build: the bundler only ships
 x64 and arm64 binaries. `node -p process.arch` should print `x64` or
-`arm64`; if not, install 64-bit Node.js from [nodejs.org](https://nodejs.org).
+`arm64`; if not, install 64-bit Node.js.
 
-**`URD Forge requires Node.js 20.19 or newer`** during `npm install`:
-install the current LTS from [nodejs.org](https://nodejs.org) and run
-`npm install` again.
+**`URD Forge requires Node.js 20.19+ (LTS) or 22.12+`** during
+`npm install`: your Node is too old for the build tooling (Node 21.x and
+22.0–22.11 are not supported either). Install the current LTS from
+[nodejs.org](https://nodejs.org) and run `npm install` again.
 
 ## Your projects
 
