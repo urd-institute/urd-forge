@@ -391,6 +391,11 @@ Everything has defaults; the file may be empty.
   `node_modules` and `.git` are ignored.
 - **Nothing updates** — the file watcher follows the `projects/` folder of
   the running installation. Check that you are editing files inside it.
+- **"Forge only answers its own page on localhost"** — Forge refuses
+  requests whose `Host` or `Origin` is not this machine, so that no other
+  web page (or a hostname pointing at 127.0.0.1) can talk to it. Open it as
+  `http://localhost:<port>` or `http://127.0.0.1:<port>`, not through another
+  hostname or a proxy.
 
 ## 9. Updating Forge
 

@@ -56,6 +56,36 @@ if (config.updates) setTimeout(() => updater.check().catch(() => {}), 3000);
 
 const app = express();
 app.disable('x-powered-by');
+
+// Only this machine's own browser tab may talk to Forge (ADR-024). Binding to
+// 127.0.0.1 keeps other machines out, but a web page on *any* origin can still
+// send requests to localhost: cross-site form posts (CSRF), cross-origin
+// WebSockets (a shell for any page you happen to have open) and DNS rebinding
+// (a hostname that resolves to 127.0.0.1, so the page is "same-origin" with
+// Forge). So every request must name this machine in Host, and — whenever a
+// browser adds one — carry an Origin that is this machine too.
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+function isLocalHostHeader(value) {
+  const m = /^(\[[^\]]+\]|[^:]+)(?::(\d+))?$/.exec(String(value || ''));
+  if (!m || !LOCAL_HOSTS.has(m[1].toLowerCase())) return false;
+  return m[2] == null ? config.port === 80 : Number(m[2]) === config.port;
+}
+function isLocalRequest(req) {
+  if (!isLocalHostHeader(req.headers.host)) return false;
+  const origin = req.headers.origin;
+  if (origin == null) return true; // no browser involved (curl on this machine)
+  try {
+    const u = new URL(origin);
+    return u.protocol === 'http:' && isLocalHostHeader(u.host);
+  } catch {
+    return false;
+  }
+}
+app.use((req, res, next) => {
+  if (isLocalRequest(req)) return next();
+  res.status(403).json({ error: 'Forge only answers its own page on localhost.' });
+});
+
 app.use(express.json({ limit: '256kb' }));
 
 // ── API ────────────────────────────────────────────────────────────────────
@@ -411,6 +441,11 @@ const wssEvents = new WebSocketServer({ noServer: true });
 const wssTerm = new WebSocketServer({ noServer: true });
 
 server.on('upgrade', (req, socket, head) => {
+  if (!isLocalRequest(req)) {
+    socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+    socket.destroy();
+    return;
+  }
   const url = new URL(req.url, 'http://localhost');
   if (url.pathname === '/ws/events') {
     wssEvents.handleUpgrade(req, socket, head, (ws) => wssEvents.emit('connection', ws, req));

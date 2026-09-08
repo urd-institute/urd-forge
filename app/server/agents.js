@@ -22,8 +22,11 @@ const SCHEDULE_HOUR = 9; // local time for daily/weekly/monthly
 const ID_RE = /^[a-z0-9][a-z0-9-]{0,49}$/;
 const SUGGESTION_ID_RE = /^S-\d{1,5}$/;
 const FILE_RE = /^[A-Za-z0-9._-]+\.md$/;
-// One permission rule for Claude Code's --allowedTools: `Tool` or `Tool(pattern)`.
-const RULE_RE = /^[A-Za-z]+(\([^()"\r\n]{1,200}\))?$/;
+// One permission rule for Claude Code's --allowedTools: `Tool` or
+// `Tool(pattern)`. The rules end up inside a double-quoted shell argument, so
+// the pattern may not contain anything a shell expands there: no quotes,
+// backticks, `$`, `!`, `;`, `|`, `&`, `<>`, backslashes or nested parens.
+const RULE_RE = /^[A-Za-z]+(\([A-Za-z0-9 _./*:@+~=-]{1,200}\))?$/;
 // What a suggestion run may do: read the project, run a few read-only
 // commands, and write only under agents/suggestions/ (Decisions Q3).
 const SUGGEST_RULES = [

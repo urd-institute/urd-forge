@@ -25,7 +25,7 @@ Developed by [URD Institute](https://urdinstitute.org).
 
 ## Requirements
 
-- **Node.js ≥ 20 (LTS)** — npm included ([nodejs.org](https://nodejs.org))
+- **Node.js ≥ 20.19 (LTS)** or 22.12+ — npm included ([nodejs.org](https://nodejs.org))
 - **Git** — on Windows: [Git for Windows](https://gitforwindows.org) (required by Claude Code, which uses Git Bash)
 - **A browser** — the UI runs on localhost
 - **Claude Code** (optional, for the command window): `npm install -g @anthropic-ai/claude-code` + an Anthropic subscription or API key
@@ -138,9 +138,15 @@ set. Pins and archived projects are remembered per installation in
 
 ## Security
 
-Localhost binding only. No command execution via the HTTP API — the terminal
-runs over a dedicated WebSocket, and preset commands are validated against the
-server-side configuration. Agent runs are built server-side from the agent
+Localhost binding only, and every request must come from Forge's own page:
+the server checks the `Host` and `Origin` headers on the HTTP API and on both
+WebSockets, so a web page on another origin cannot post to Forge, open a
+terminal, or reach it through DNS rebinding. No command execution via the
+HTTP API — the terminal runs over a dedicated WebSocket, and preset commands
+are validated against the server-side configuration. Agent permission rules
+are restricted to characters no shell expands. Zip import refuses paths that
+escape the target folder, reserved Windows names and archives that would
+unpack past a size limit. Found a problem? See [SECURITY.md](SECURITY.md). Agent runs are built server-side from the agent
 files (the browser only names an agent), and headless runs get Claude Code
 permission rules that allow writes under `agents/suggestions/` only. Sessions
 die with the app. Self-update is fast-forward only. A hosted edition needs

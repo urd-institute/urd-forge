@@ -18,6 +18,13 @@ import yazl from 'yazl';
 import yauzl from 'yauzl';
 import { ScaffoldError } from './scaffold.js';
 
+// Import limits: the upload itself is capped by the route; these cap what a
+// zip may expand to, so a zip bomb cannot fill the disk.
+const IMPORT_MAX_ENTRIES = 50000;
+const IMPORT_MAX_UNPACKED = 4 * 1024 * 1024 * 1024;
+// Names Windows reserves for devices (writing to `CON` hits the console).
+const RESERVED_NAME_RE = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
+
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,49}$/;
 const SKIP_DIRS = new Set(['node_modules', '.forge']);
 const SKIP_FILES = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
@@ -121,10 +128,21 @@ export async function importProject(config, zipPath, { slug }) {
     files = files.filter((f) => !isSkippedPath(f.rel));
     if (files.length === 0) throw new ScaffoldError(400, 'The zip file contains no project files (only skipped folders).');
 
+    if (files.length > IMPORT_MAX_ENTRIES) {
+      throw new ScaffoldError(400, 'The zip file contains too many files (limit ' + IMPORT_MAX_ENTRIES + ').');
+    }
+    const unpacked = files.reduce((n, f) => n + (f.entry.uncompressedSize || 0), 0);
+    if (unpacked > IMPORT_MAX_UNPACKED) {
+      throw new ScaffoldError(400, 'The zip file would unpack to more than ' + IMPORT_MAX_UNPACKED / 1024 ** 3 + ' GB.');
+    }
+
     for (const f of files) {
       const segments = f.rel.split('/');
       if (segments.some((s) => s === '' || s === '.' || s === '..') || /^[A-Za-z]:/.test(f.rel)) {
         throw new ScaffoldError(400, 'The zip file contains an unsafe path: ' + f.rel);
+      }
+      if (segments.some((s) => RESERVED_NAME_RE.test(s) || /[. ]$/.test(s))) {
+        throw new ScaffoldError(400, 'The zip file contains a file name Windows cannot store: ' + f.rel);
       }
       const target = path.resolve(dir, ...segments);
       if (target !== dir && !target.startsWith(dir + path.sep)) {

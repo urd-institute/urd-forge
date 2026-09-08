@@ -262,6 +262,14 @@ export class Store {
     const projectDir = path.resolve(this.config.projectsDir, slug);
     const resolved = path.resolve(projectDir, relPath);
     if (resolved !== projectDir && !resolved.startsWith(projectDir + path.sep)) return null;
+    // A symlink inside the project may not point outside it either.
+    try {
+      const realProject = fs.realpathSync.native(projectDir);
+      const real = fs.realpathSync.native(resolved);
+      if (real !== realProject && !real.startsWith(realProject + path.sep)) return null;
+    } catch {
+      /* the file does not exist — the caller answers 404 */
+    }
     return resolved;
   }
 }

@@ -4,12 +4,13 @@
  * Node.js version is too old, instead of letting native module builds explode
  * with a raw compiler error (SPEC-00 §8a).
  */
-const REQUIRED_MAJOR = 20;
-const major = Number.parseInt(process.versions.node.split('.')[0], 10);
+// Node 20.19 or 22.12+: what the build tooling (Vite 8) needs.
+const REQUIRED = [20, 19];
+const [major, minor] = process.versions.node.split('.').map((n) => Number.parseInt(n, 10));
 
-if (major < REQUIRED_MAJOR) {
+if (major < REQUIRED[0] || (major === REQUIRED[0] && minor < REQUIRED[1])) {
   console.error('');
-  console.error('  URD Forge requires Node.js ' + REQUIRED_MAJOR + ' (LTS) or newer.');
+  console.error('  URD Forge requires Node.js ' + REQUIRED.join('.') + ' (LTS) or newer.');
   console.error('  You are running Node.js ' + process.versions.node + '.');
   console.error('');
   console.error('  Fix: install the current LTS from https://nodejs.org');
